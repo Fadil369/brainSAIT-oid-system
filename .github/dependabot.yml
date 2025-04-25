@@ -1,0 +1,31 @@
+version: 2
+updates:
+  # Check for updates to npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/" # Location of the package.json file
+    schedule:
+      interval: "weekly"
+
+  # Check for updates to Python pip dependencies
+  - package-ecosystem: "pip"
+    directory: "/" # Location of the requirements.txt file
+    schedule:
+      interval: "weekly"
+
+  # Check for updates to Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/" # Location of the Dockerfile
+    schedule:
+      interval: "weekly"
+
+  # Check for updates to GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/" # Location of GitHub Actions workflows
+    schedule:
+      interval: "weekly"
+
+  # Check for updates to Shell script dependencies (optional)
+  - package-ecosystem: "shell"
+    directory: "/" # Adjust this if Shell scripts are located in a subdirectory
+    schedule:
+      interval: "weekly"
