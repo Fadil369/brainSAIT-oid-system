@@ -1,0 +1,125 @@
+name: BrainSAIT OID System CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: oid_registry
+          POSTGRES_USER: oid_admin
+          POSTGRES_PASSWORD: supersecurepassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Initialize database
+      run: |
+        export PGPASSWORD=supersecurepassword
+        psql -h localhost -U oid_admin -d oid_registry -f backend/init.sql
+        
+    - name: Test backend
+      run: |
+        cd backend
+        # Run pytest or any other test framework
+        python -c "
+import requests
+import time
+import os
+
+# Start the server
+import subprocess
+server = subprocess.Popen(['uvicorn', 'main:app', '--host', '0.0.0.0', '--port', '8000'])
+time.sleep(5)  # Wait for server to start
+
+# Run tests
+try:
+    # GET /oids
+    response = requests.get('http://localhost:8000/oids')
+    assert response.status_code == 200, f'GET /oids failed with status {response.status_code}'
+    print('✅ GET /oids test passed')
+    
+    # POST /oids
+    response = requests.post('http://localhost:8000/oids', json={
+        'user_id': 'test_user',
+        'name': 'Test Badge',
+        'role': 'tester',
+        'access_level': 'low',
+        'expires': '2026-01-01T00:00:00'
+    })
+    assert response.status_code == 200, f'POST /oids failed with status {response.status_code}'
+    print('✅ POST /oids test passed')
+    
+    # Error handling
+    response = requests.put('http://localhost:8000/oids/99999', json={
+        'user_id': 'invalid_user',
+        'name': 'Invalid Badge',
+        'role': 'invalid',
+        'access_level': 'invalid',
+        'expires': 'invalid-date'
+    })
+    assert response.status_code in [400, 404, 422], f'Error handling test unexpected status: {response.status_code}'
+    print('✅ Error handling test passed')
+    
+    print('All backend tests passed!')
+except Exception as e:
+    print(f'❌ Tests failed: {e}')
+    exit(1)
+finally:
+    # Terminate server
+    server.terminate()
+"
+        
+  test-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        
+    - name: Install dependencies
+      run: |
+        cd oid-portal
+        npm ci
+        
+    - name: Build frontend
+      run: |
+        cd oid-portal
+        npm run build
+        
+    - name: Test frontend
+      run: |
+        cd oid-portal
+        # Run frontend tests (when they exist)
+        # npm test
+        echo "Frontend build successful"
