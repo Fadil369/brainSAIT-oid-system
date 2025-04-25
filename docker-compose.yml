@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=oid_registry
+      - DB_USER=oid_admin
+      - DB_PASS=supersecurepassword
+    depends_on:
+      - db
+
+  frontend:
+    build: ./oid-portal
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: oid_registry
+      POSTGRES_USER: oid_admin
+      POSTGRES_PASSWORD: supersecurepassword
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

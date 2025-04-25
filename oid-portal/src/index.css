@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --secondary: #10b981;
+  --dark-bg: #111827;
+  --darker-bg: #0d121d;
+  --content-bg: #1f2937;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --danger: #ef4444;
+  --success: #10b981;
+  --border-color: #374151;
+}
+
+body {
+  @apply bg-dark-bg text-text-primary font-sans m-0 p-0;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--darker-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-light);
+}
+
+/* Custom Components */
+@layer components {
+  .card {
+    @apply bg-content-bg rounded-lg border border-border-color shadow-md overflow-hidden;
+  }
+  
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg disabled:opacity-50;
+  }
+  
+  .btn-primary {
+    @apply btn bg-primary hover:bg-primary-light focus:ring-primary text-text-primary;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-secondary hover:opacity-90 focus:ring-secondary text-text-primary;
+  }
+  
+  .btn-outline {
+    @apply btn border border-border-color hover:bg-content-bg text-text-secondary;
+  }
+  
+  .btn-danger {
+    @apply btn bg-danger hover:opacity-90 focus:ring-danger text-text-primary;
+  }
+  
+  .input {
+    @apply bg-darker-bg border border-border-color rounded-md px-4 py-2 text-text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent w-full;
+  }
+  
+  .label {
+    @apply block text-sm font-medium text-text-secondary mb-1;
+  }
+  
+  /* Chat UI Components */
+  .chat-container {
+    @apply bg-content-bg rounded-lg border border-border-color shadow-lg p-4;
+  }
+  
+  .chat-message {
+    @apply p-3 rounded-lg mb-3 max-w-[80%];
+  }
+  
+  .chat-message-user {
+    @apply chat-message bg-primary text-text-primary ml-auto;
+  }
+  
+  .chat-message-ai {
+    @apply chat-message bg-darker-bg text-text-primary;
+  }
+  
+  .chat-input {
+    @apply flex items-center bg-darker-bg rounded-full border border-border-color overflow-hidden;
+  }
+}
