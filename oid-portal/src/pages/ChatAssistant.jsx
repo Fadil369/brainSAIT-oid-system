@@ -218,11 +218,11 @@ To learn more about a specific aspect of the system, could you provide more deta
       <div className="mt-2 p-2 bg-darker-bg rounded-md flex items-center">
         <div className="p-2 rounded-md bg-content-bg mr-2">
           {isImage ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor" loading="lazy">
               <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor" loading="lazy">
               <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
             </svg>
           )}
@@ -249,7 +249,7 @@ To learn more about a specific aspect of the system, could you provide more deta
           <div className="p-4 border-b border-border-color">
             <div className="flex items-center">
               <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text-primary" viewBox="0 0 20 20" fill="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text-primary" viewBox="0 0 20 20" fill="currentColor" loading="lazy">
                   <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -316,7 +316,7 @@ To learn more about a specific aspect of the system, could you provide more deta
                   onClick={handleAttachFile}
                   className="p-2 rounded-full text-text-secondary hover:text-primary focus:outline-none"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" loading="lazy">
                     <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
                   </svg>
                 </button>
@@ -326,7 +326,7 @@ To learn more about a specific aspect of the system, could you provide more deta
                   className="p-2 rounded-full text-primary hover:text-primary-light focus:outline-none"
                   disabled={!inputValue.trim()}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" loading="lazy">
                     <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11h2a1 1 0 00.9-.553l4-8a1 1 0 00-.9-1.447h-7.118l2.112-2.224a1 1 0 00-.12-1.493L4.654 2.749a1 1 0 00-1.253.18L.01 7.061a1 1 0 00.098 1.266l2.4 2.4A1 1 0 003.5 10H8v5.571l-6.5 1.857a1 1 0 00-.59 1.545l3.71 3.71a1 1 0 001.415-1.42l-2.299-2.3 6.5-1.857a1 1 0 00.713-.954V10h6.182a1 1 0 00.894-.553l3-6A1 1 0 0017 2h-6.106z" />
                   </svg>
                 </button>
@@ -365,7 +365,7 @@ To learn more about a specific aspect of the system, could you provide more deta
             <div className="p-4">
               <div className="text-center mb-6">
                 <div className="mx-auto h-16 w-16 rounded-full bg-primary flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-text-primary" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-text-primary" viewBox="0 0 20 20" fill="currentColor" loading="lazy">
                     <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                   </svg>
                 </div>
