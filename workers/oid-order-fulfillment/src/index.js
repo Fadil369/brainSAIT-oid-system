@@ -271,6 +271,38 @@ async function notifyTelegramSale(env, { orderId, customerEmail, items, currency
   return { ok: true };
 }
 
+// Feeds the same purchase.fulfilled event stream the Hetzner-side hub already exposes at
+// GET /events -- n8n's "New Order Fanout" workflow and other Hermes-cron automation poll that
+// stream, but only ever saw PayPal/legacy-Shopify sales because this Worker fulfills entirely on
+// Cloudflare's edge and never touched the hub. One event per line item, not per order, to match
+// what that consumer already expects (product_id keyed).
+async function notifyHubEvents(env, { customerEmail, items, currency = "SAR" }) {
+  if (!env.DELIVERY_ADMIN_TOKEN) return { ok: false, skipped: true };
+  const results = await Promise.all(
+    items.map((item) =>
+      fetch(`${HUB_BASE_URL}/event/purchase-fulfilled`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hub-key": env.DELIVERY_ADMIN_TOKEN,
+        },
+        body: JSON.stringify({
+          product_id: item.sku,
+          customer_email: customerEmail,
+          source: "oid-shopify",
+          amount: item.amount,
+          currency,
+        }),
+      })
+    )
+  );
+  const failed = results.filter((resp) => !resp.ok);
+  if (failed.length > 0) {
+    throw new Error(`hub-event:${failed.map((resp) => resp.status).join(",")}`);
+  }
+  return { ok: true };
+}
+
 async function logToAirtable(env, record) {
   const resp = await fetch(
     `${AIRTABLE_API_URL}/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(env.AIRTABLE_TABLE_NAME)}`,
@@ -413,7 +445,7 @@ async function handleOrderPaid(request, env) {
     });
   }
 
-  const notifications = { email: null, telegram: null };
+  const notifications = { email: null, telegram: null, hubEvents: null };
   if (fulfilled.length > 0) {
     try {
       notifications.email = await sendDeliveryEmail(env, {
@@ -436,6 +468,12 @@ async function handleOrderPaid(request, env) {
     } catch (error) {
       console.error("telegram notify failed", JSON.stringify({ orderId, error: error.message }));
       notifications.telegram = { ok: false, error: error.message };
+    }
+    try {
+      notifications.hubEvents = await notifyHubEvents(env, { customerEmail, items: fulfilled });
+    } catch (error) {
+      console.error("hub event feed failed", JSON.stringify({ orderId, error: error.message }));
+      notifications.hubEvents = { ok: false, error: error.message };
     }
   }
 
