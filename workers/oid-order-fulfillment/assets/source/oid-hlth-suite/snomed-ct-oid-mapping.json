@@ -1,0 +1,25 @@
+{
+  "version": "2024-01",
+  "description": "SNOMED CT to BrainSAIT OID mappings for healthcare interoperability",
+  "iana_pen": 61026,
+  "mappings": [
+    {
+      "snomed_concept": "73211009",
+      "snomed_display": "Diabetes mellitus",
+      "oid": "1.3.6.1.4.1.61026.3.5.73211009",
+      "fhir_code_system": "http://snomed.info/sct"
+    },
+    {
+      "snomed_concept": "38341003",
+      "snomed_display": "Hypertensive disorder",
+      "oid": "1.3.6.1.4.1.61026.3.5.38341003",
+      "fhir_code_system": "http://snomed.info/sct"
+    },
+    {
+      "snomed_concept": "195967001",
+      "snomed_display": "Asthma",
+      "oid": "1.3.6.1.4.1.61026.3.5.195967001",
+      "fhir_code_system": "http://snomed.info/sct"
+    }
+  ]
+}

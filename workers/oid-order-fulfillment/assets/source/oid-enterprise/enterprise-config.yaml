@@ -1,0 +1,32 @@
+# BrainSAIT OID Enterprise Platform Configuration
+# IANA PEN 61026
+
+oid:
+  root: "1.3.6.1.4.1.61026"
+  iana_pen: 61026
+  organization: "BrainSAIT"
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  tls_port: 8443
+  jwt_expiry: 3600
+
+registry:
+  database_url: "${DATABASE_URL}"
+  redis_url: "${REDIS_URL}"
+  cache_ttl: 300
+
+namespaces:
+  healthcare: "1.3.6.1.4.1.61026.3.2"
+  ai_agents:  "1.3.6.1.4.1.61026.3.3"
+  iot_edge:   "1.3.6.1.4.1.61026.4"
+
+fhir:
+  server_url: "${FHIR_SERVER_URL}"
+  version: "R4"
+  nphies_api_url: "${NPHIES_API_URL}"
+
+logging:
+  level: "info"
+  format: "json"

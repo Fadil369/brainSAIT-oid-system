@@ -1,0 +1,14 @@
+{
+  "resourceType": "ImplementationGuide",
+  "id": "brainsait-oid-ig",
+  "url": "https://fhir.brainsait.org/ImplementationGuide/brainsait-oid",
+  "version": "1.0.0",
+  "name": "BrainSAITOIDImplementationGuide",
+  "title": "BrainSAIT OID FHIR Implementation Guide",
+  "status": "active",
+  "fhirVersion": ["4.0.1"],
+  "packageId": "org.brainsait.oid-fhir",
+  "dependsOn": [
+    {"packageId": "hl7.fhir.r4.core", "version": "4.0.1"}
+  ]
+}

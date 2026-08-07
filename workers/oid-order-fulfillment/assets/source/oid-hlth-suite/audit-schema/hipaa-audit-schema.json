@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BrainSAIT HIPAA OID Audit Trail Schema",
+  "description": "HIPAA-compliant audit trail schema anchored to BrainSAIT OID namespace",
+  "type": "object",
+  "required": ["event_id", "timestamp", "actor_oid", "action", "resource_oid"],
+  "properties": {
+    "event_id": {"type": "string", "format": "uuid"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "actor_oid": {
+      "type": "string",
+      "pattern": "^1\\.3\\.6\\.1\\.4\\.1\\.61026(\\.[0-9]+)*$"
+    },
+    "action": {
+      "type": "string",
+      "enum": ["CREATE", "READ", "UPDATE", "DELETE", "QUERY", "EXPORT"]
+    },
+    "resource_oid": {
+      "type": "string",
+      "pattern": "^1\\.3\\.6\\.1\\.4\\.1\\.61026(\\.[0-9]+)*$"
+    },
+    "outcome": {"type": "string", "enum": ["SUCCESS", "FAILURE", "PARTIAL"]},
+    "patient_id": {"type": "string"},
+    "ip_address": {"type": "string", "format": "ipv4"},
+    "phi_accessed": {"type": "boolean"}
+  }
+}

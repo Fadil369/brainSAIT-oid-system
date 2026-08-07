@@ -1,0 +1,23 @@
+{
+  "resourceType": "Bundle",
+  "id": "brainsait-oid-namespace-r4",
+  "meta": {
+    "profile": ["http://hl7.org/fhir/StructureDefinition/Bundle"]
+  },
+  "type": "collection",
+  "entry": [
+    {
+      "resource": {
+        "resourceType": "NamingSystem",
+        "id": "brainsait-oid-root",
+        "status": "active",
+        "kind": "identifier",
+        "name": "BrainSAIT OID Root",
+        "description": "IANA PEN 61026 OID namespace root for BrainSAIT",
+        "uniqueId": [
+          {"type": "oid", "value": "1.3.6.1.4.1.61026", "preferred": true}
+        ]
+      }
+    }
+  ]
+}
