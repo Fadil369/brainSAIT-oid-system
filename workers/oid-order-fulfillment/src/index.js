@@ -106,7 +106,24 @@ const SKU_ASSETS = {
       { id: "fhir-plat-docs", r2_key: "products/oid-fhir-platform/fhir-platform-docs.html", filename: "FHIR_Platform_Docs.html", kind: "html", size: 0 },
     ],
   },
+  "BSP-OID-ARDUINO-SCANNER": {
+    name: "OID Arduino IoT Scanner — Hardware Blueprint",
+    maxDownloads: 5,
+    expiresInDays: 365,
+    assets: [
+      { id: "arduino-notice", r2_key: "products/oid-arduino/arduino-scanner-notice.html", filename: "Order_Confirmation_and_Delivery_Notice.html", kind: "html", size: 0 },
+    ],
+  },
 };
+
+// Storefront SKUs are one purchasable line per bundle, but several bundles reuse the same
+// underlying asset manifest (e.g. the live Shopify catalog sells "BSP-OID-*" SKUs while this
+// manifest was originally keyed by the internal "OID-*-001" naming). Alias them here instead of
+// duplicating manifests, so a rename on either side only needs one line changed.
+SKU_ASSETS["BSP-OID-INTEGRATION-BLUEPRINT"] = { ...SKU_ASSETS["OID-STARTER-001"], assets: [...SKU_ASSETS["OID-STARTER-001"].assets] };
+SKU_ASSETS["BSP-OID-REGISTRY-PLATFORM"] = { ...SKU_ASSETS["OID-DEV-001"], assets: [...SKU_ASSETS["OID-DEV-001"].assets] };
+SKU_ASSETS["BSP-OID-NPHIES-BUNDLE"] = { ...SKU_ASSETS["OID-HLTH-001"], assets: [...SKU_ASSETS["OID-HLTH-001"].assets] };
+SKU_ASSETS["BSP-OID-ENTERPRISE-BADGE"] = { ...SKU_ASSETS["OID-BADGE-001"], assets: [...SKU_ASSETS["OID-BADGE-001"].assets] };
 
 async function generateLicenseKey(secret, orderId, lineItemId, unit, sku) {
   const prefix = sku.replace(/[^A-Z0-9]/g, "").slice(0, 8);
@@ -229,7 +246,7 @@ async function handleOrderPaid(request, env) {
 
   for (const [lineIndex, lineItem] of (order.line_items || []).entries()) {
     const sku = lineItem.sku;
-    if (!sku || !sku.startsWith("OID-")) {
+    if (!sku || !(sku.startsWith("OID-") || sku.startsWith("BSP-OID-"))) {
       ignored += 1;
       continue;
     }
