@@ -10,7 +10,6 @@ on:
   pull_request:
     branches:
       - main
-      - claude/oid-system-monetization-8ovu9h
     paths:
       - "workers/oid-order-fulfillment/**"
       - ".github/workflows/deploy-oid-worker.yml"
