@@ -1,5 +1,94 @@
 import { useState, useEffect } from 'react';
 import { Link } from '../lib/router';
+import { getAllBadges } from '../services/api';
+
+const ROOT_OID = '1.3.6.1.4.1.61026';
+
+function toStatus(expires) {
+  const parsed = new Date(expires);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'unknown';
+  }
+  return parsed.getTime() < Date.now() ? 'revoked' : 'active';
+}
+
+function buildOidTree(badges) {
+  const root = {
+    id: `oid:${ROOT_OID}`,
+    name: 'BrainSAIT LTD Enterprise Root',
+    oid: ROOT_OID,
+    children: [],
+    isBadge: false,
+  };
+
+  const nodeMap = new Map();
+  nodeMap.set(ROOT_OID, root);
+
+  for (const badge of badges) {
+    const fullOid = badge.full_oid || `${ROOT_OID}.${badge.oid}`;
+    const parts = fullOid.split('.').filter(Boolean);
+
+    if (!fullOid.startsWith(ROOT_OID)) {
+      continue;
+    }
+
+    let currentPath = '';
+    let parent = null;
+
+    for (const part of parts) {
+      currentPath = currentPath ? `${currentPath}.${part}` : part;
+
+      if (!nodeMap.has(currentPath)) {
+        const segmentNode = {
+          id: `oid:${currentPath}`,
+          name: currentPath === ROOT_OID ? 'BrainSAIT LTD Enterprise Root' : `Node ${part}`,
+          oid: currentPath,
+          children: [],
+          isBadge: false,
+        };
+
+        nodeMap.set(currentPath, segmentNode);
+        if (parent) {
+          parent.children.push(segmentNode);
+        }
+      }
+
+      parent = nodeMap.get(currentPath);
+    }
+
+    if (!parent) {
+      continue;
+    }
+
+    parent.isBadge = true;
+    parent.badgeType = badge.role;
+    parent.owner = badge.name;
+    parent.userId = badge.user_id;
+    parent.accessLevel = badge.access_level;
+    parent.expires = badge.expires;
+    parent.status = toStatus(badge.expires);
+    parent.displayName = badge.name;
+    parent.fullOid = fullOid;
+  }
+
+  const sortTree = (node) => {
+    node.children.sort((a, b) => {
+      const aPart = Number(a.oid.split('.').at(-1));
+      const bPart = Number(b.oid.split('.').at(-1));
+      if (Number.isNaN(aPart) || Number.isNaN(bPart)) {
+        return a.oid.localeCompare(b.oid);
+      }
+      return aPart - bPart;
+    });
+
+    for (const child of node.children) {
+      sortTree(child);
+    }
+  };
+
+  sortTree(root);
+  return root;
+}
 
 const OidTree = () => {
   const [treeData, setTreeData] = useState(null);
@@ -7,162 +96,81 @@ const OidTree = () => {
   const [expandedNodes, setExpandedNodes] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNode, setSelectedNode] = useState(null);
-  
+  const [loadError, setLoadError] = useState('');
+
   useEffect(() => {
-    // Simulate fetching OID tree data
-    setTimeout(() => {
-      const mockTreeData = {
-        id: 'root',
-        name: 'OID Root',
-        oid: '1',
-        children: [
-          {
-            id: 'iso',
-            name: 'ISO',
-            oid: '1.3',
-            children: [
-              {
-                id: 'identified-organization',
-                name: 'Identified Organization',
-                oid: '1.3.6',
-                children: [
-                  {
-                    id: 'dod',
-                    name: 'DoD',
-                    oid: '1.3.6.1',
-                    children: [
-                      {
-                        id: 'internet',
-                        name: 'Internet',
-                        oid: '1.3.6.1.4',
-                        children: [
-                          {
-                            id: 'private',
-                            name: 'Private',
-                            oid: '1.3.6.1.4.1',
-                            children: [
-                              {
-                                id: 'brainsait',
-                                name: 'BrainSAIT',
-                                oid: '1.3.6.1.4.1.9999',
-                                children: [
-                                  {
-                                    id: 'admin',
-                                    name: 'Admin Access',
-                                    oid: '1.3.6.1.4.1.9999.1',
-                                    badgeType: 'access',
-                                    owner: 'System Administrator',
-                                    status: 'active'
-                                  },
-                                  {
-                                    id: 'developer',
-                                    name: 'Developer Access',
-                                    oid: '1.3.6.1.4.1.9999.2',
-                                    badgeType: 'access',
-                                    owner: 'Developer Team',
-                                    status: 'active'
-                                  },
-                                  {
-                                    id: 'guest',
-                                    name: 'Guest Access',
-                                    oid: '1.3.6.1.4.1.9999.3',
-                                    badgeType: 'access',
-                                    owner: 'Reception',
-                                    status: 'pending'
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        id: 'security',
-                        name: 'Security',
-                        oid: '1.3.6.1.5',
-                        children: [
-                          {
-                            id: 'brainsait-security',
-                            name: 'BrainSAIT Security',
-                            oid: '1.3.6.1.5.9999',
-                            children: [
-                              {
-                                id: 'sec-admin',
-                                name: 'Security Admin Badge',
-                                oid: '1.3.6.1.5.9999.1',
-                                badgeType: 'identity',
-                                owner: 'Security Officer',
-                                status: 'active'
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      };
-      
-      // Pre-expand some nodes for better user experience
-      const expanded = {
-        'root': true,
-        'iso': true,
-        'identified-organization': true,
-        'dod': true,
-        'internet': true,
-        'private': true,
-        'brainsait': true,
-      };
-      
-      setTreeData(mockTreeData);
-      setExpandedNodes(expanded);
-      setIsLoading(false);
-    }, 1000);
+    let isMounted = true;
+
+    const loadTree = async () => {
+      setIsLoading(true);
+      setLoadError('');
+      try {
+        const badges = await getAllBadges();
+        const tree = buildOidTree(Array.isArray(badges) ? badges : []);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setTreeData(tree);
+        setExpandedNodes({ [tree.id]: true });
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setLoadError('Unable to load OID tree data from the API.');
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadTree();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
-  
+
   const toggleNode = (nodeId) => {
-    setExpandedNodes({
-      ...expandedNodes,
-      [nodeId]: !expandedNodes[nodeId]
-    });
+    setExpandedNodes((previous) => ({
+      ...previous,
+      [nodeId]: !previous[nodeId],
+    }));
   };
-  
+
   const handleNodeSelect = (node) => {
     setSelectedNode(node);
   };
-  
+
   const filterTree = (node, query) => {
     if (!query) return true;
-    
-    const matchesQuery = 
-      node.name.toLowerCase().includes(query.toLowerCase()) ||
-      node.oid.toLowerCase().includes(query.toLowerCase());
-    
+
+    const normalized = query.toLowerCase();
+    const matchesQuery =
+      node.name.toLowerCase().includes(normalized)
+      || node.oid.toLowerCase().includes(normalized)
+      || (node.owner || '').toLowerCase().includes(normalized)
+      || (node.userId || '').toLowerCase().includes(normalized);
+
     if (matchesQuery) return true;
-    
-    if (node.children) {
-      return node.children.some(child => filterTree(child, query));
-    }
-    
-    return false;
+
+    return node.children?.some((child) => filterTree(child, query));
   };
-  
+
   const renderTreeNode = (node, level = 0) => {
     if (!node) return null;
-    
-    // Apply search filter
+
     if (searchQuery && !filterTree(node, searchQuery)) return null;
-    
+
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expandedNodes[node.id];
     const showChildren = hasChildren && isExpanded;
     const isLeaf = !hasChildren;
     const isSelected = selectedNode && selectedNode.id === node.id;
-    
+
     const getBadgeStatusColor = (status) => {
       switch (status) {
         case 'active': return 'bg-success';
@@ -171,15 +179,15 @@ const OidTree = () => {
         default: return 'bg-border-color';
       }
     };
-    
+
     return (
       <div key={node.id} className="tree-node">
-        <div 
+        <div
           className={`flex items-center py-2 px-3 rounded-md transition-colors ${isSelected ? 'bg-primary bg-opacity-20' : 'hover:bg-content-bg'}`}
           style={{ paddingLeft: `${(level * 20) + 8}px` }}
         >
           {hasChildren ? (
-            <button 
+            <button
               onClick={() => toggleNode(node.id)}
               className="w-5 h-5 mr-2 flex items-center justify-center text-text-secondary hover:text-text-primary"
             >
@@ -196,8 +204,8 @@ const OidTree = () => {
           ) : (
             <div className="w-5 h-5 mr-2"></div>
           )}
-          
-          <div 
+
+          <div
             className="flex-1 flex items-center cursor-pointer"
             onClick={() => handleNodeSelect(node)}
           >
@@ -206,23 +214,23 @@ const OidTree = () => {
             ) : (
               <div className="h-3 w-3 rounded-sm bg-primary mr-2"></div>
             )}
-            
+
             <div>
-              <div className="text-sm font-medium text-text-primary">{node.name}</div>
+              <div className="text-sm font-medium text-text-primary">{node.displayName || node.name}</div>
               <div className="text-xs text-text-secondary">{node.oid}</div>
             </div>
-            
-            {node.badgeType && (
+
+            {node.isBadge && (
               <div className="ml-3 flex items-center">
                 <span className={`px-2 py-0.5 text-xs rounded-full ${getBadgeStatusColor(node.status)}`}>
                   {node.status}
                 </span>
               </div>
             )}
-            
-            {node.badgeType && (
-              <Link 
-                to={`/edit/${node.oid}`} 
+
+            {node.isBadge && (
+              <Link
+                to={`/edit/${encodeURIComponent(node.fullOid || node.oid)}`}
                 className="ml-auto text-primary hover:text-primary-light text-sm"
               >
                 Edit
@@ -230,10 +238,10 @@ const OidTree = () => {
             )}
           </div>
         </div>
-        
+
         {showChildren && (
           <div className="pl-2">
-            {node.children.map(child => renderTreeNode(child, level + 1))}
+            {node.children.map((child) => renderTreeNode(child, level + 1))}
           </div>
         )}
       </div>
@@ -246,7 +254,7 @@ const OidTree = () => {
         <h1 className="text-2xl font-bold text-text-primary">OID Tree</h1>
         <p className="text-sm text-text-secondary mt-1">Browse the hierarchical structure of registered OIDs</p>
       </div>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <div className="card">
@@ -282,6 +290,8 @@ const OidTree = () => {
                     </div>
                   ))}
                 </div>
+              ) : loadError ? (
+                <div className="p-4 text-sm text-danger">{loadError}</div>
               ) : (
                 <div className="tree">
                   {treeData && renderTreeNode(treeData)}
@@ -290,31 +300,41 @@ const OidTree = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="md:col-span-1">
           <div className="card sticky top-4">
             <div className="p-4 border-b border-border-color">
               <h2 className="text-lg font-semibold text-text-primary">Node Details</h2>
             </div>
-            
+
             {selectedNode ? (
               <div className="p-4">
-                <h3 className="text-lg font-medium text-text-primary mb-1">{selectedNode.name}</h3>
+                <h3 className="text-lg font-medium text-text-primary mb-1">{selectedNode.displayName || selectedNode.name}</h3>
                 <p className="text-sm text-text-secondary mb-4">{selectedNode.oid}</p>
-                
+
                 <div className="space-y-4">
-                  {selectedNode.badgeType && (
+                  {selectedNode.isBadge && (
                     <>
                       <div>
-                        <h4 className="text-xs uppercase text-text-secondary mb-1">Badge Type</h4>
-                        <p className="text-sm text-text-primary capitalize">{selectedNode.badgeType}</p>
+                        <h4 className="text-xs uppercase text-text-secondary mb-1">Role</h4>
+                        <p className="text-sm text-text-primary">{selectedNode.badgeType}</p>
                       </div>
-                      
+
                       <div>
                         <h4 className="text-xs uppercase text-text-secondary mb-1">Owner</h4>
                         <p className="text-sm text-text-primary">{selectedNode.owner}</p>
                       </div>
-                      
+
+                      <div>
+                        <h4 className="text-xs uppercase text-text-secondary mb-1">User ID</h4>
+                        <p className="text-sm text-text-primary">{selectedNode.userId}</p>
+                      </div>
+
+                      <div>
+                        <h4 className="text-xs uppercase text-text-secondary mb-1">Access</h4>
+                        <p className="text-sm text-text-primary capitalize">{selectedNode.accessLevel}</p>
+                      </div>
+
                       <div>
                         <h4 className="text-xs uppercase text-text-secondary mb-1">Status</h4>
                         <p className="text-sm">
@@ -327,10 +347,15 @@ const OidTree = () => {
                           </span>
                         </p>
                       </div>
-                      
+
+                      <div>
+                        <h4 className="text-xs uppercase text-text-secondary mb-1">Expires</h4>
+                        <p className="text-sm text-text-primary">{selectedNode.expires || 'N/A'}</p>
+                      </div>
+
                       <div className="pt-4">
-                        <Link 
-                          to={`/edit/${selectedNode.oid}`}
+                        <Link
+                          to={`/edit/${encodeURIComponent(selectedNode.fullOid || selectedNode.oid)}`}
                           className="btn btn-primary w-full"
                         >
                           Edit Badge
@@ -338,13 +363,12 @@ const OidTree = () => {
                       </div>
                     </>
                   )}
-                  
-                  {!selectedNode.badgeType && selectedNode.id !== 'root' && (
+
+                  {!selectedNode.isBadge && selectedNode.oid !== ROOT_OID && (
                     <div className="pt-4">
-                      <Link 
+                      <Link
                         to="/register"
                         className="btn btn-outline w-full"
-                        state={{ parentOid: selectedNode.oid }}
                       >
                         Register Badge at This Node
                       </Link>
