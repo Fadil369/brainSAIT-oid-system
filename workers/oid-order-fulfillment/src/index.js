@@ -106,14 +106,6 @@ const SKU_ASSETS = {
       { id: "fhir-plat-docs", r2_key: "products/oid-fhir-platform/fhir-platform-docs.html", filename: "FHIR_Platform_Docs.html", kind: "html", size: 0 },
     ],
   },
-  "BSP-OID-ARDUINO-SCANNER": {
-    name: "OID Arduino IoT Scanner — Hardware Blueprint",
-    maxDownloads: 5,
-    expiresInDays: 365,
-    assets: [
-      { id: "arduino-notice", r2_key: "products/oid-arduino/arduino-scanner-notice.html", filename: "Order_Confirmation_and_Delivery_Notice.html", kind: "html", size: 0 },
-    ],
-  },
 };
 
 // Storefront SKUs are one purchasable line per bundle, but several bundles reuse the same
@@ -188,6 +180,127 @@ async function grantLicense(env, licenseKey, orderId, productIds, assets, custom
     throw new Error(`delivery:${resp.status}`);
   }
   return resp.status === 409 ? { ok: true, replay: true } : resp.json();
+}
+
+const HUB_BASE_URL = "https://hub.brainsait.de";
+
+function renderDeliveryEmailHtml({ customerName, language, orderId, items }) {
+  const isAr = language === "AR";
+  const rows = items
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding:10px 0;border-bottom:1px solid #eceaf2;font-size:14px;color:#211E1F">${item.productName}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #eceaf2;text-align:right">
+          <a href="${item.deliveryUrl}" style="background:#545EA9;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px">
+            ${isAr ? "تنزيل" : "Download"}
+          </a>
+        </td>
+      </tr>`
+    )
+    .join("");
+  const heading = isAr ? "طلبك جاهز" : "Your order is ready";
+  const greeting = isAr
+    ? `مرحباً ${customerName || ""}، شكراً لشرائك من BrainSAIT.`
+    : `Hi ${customerName || "there"}, thanks for your purchase from BrainSAIT.`;
+  const note = isAr
+    ? "كل رابط يوصلك لصفحة التنزيلات الخاصة بترخيصك — احتفظ به، فهو نقطة الوصول الدائمة لهذا الطلب."
+    : "Each link takes you to your license's download page — keep it, it's your permanent access point for this order.";
+  return `<!doctype html><html lang="${isAr ? "ar" : "en"}" dir="${isAr ? "rtl" : "ltr"}"><body style="margin:0;background:#f7f7fb;font-family:-apple-system,Segoe UI,Roboto,sans-serif">
+    <div style="max-width:560px;margin:0 auto;padding:32px 20px">
+      <div style="background:#fff;border-radius:12px;padding:28px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+        <h1 style="font-size:20px;margin:0 0 6px;color:#211E1F">${heading}</h1>
+        <p style="color:#6b6b76;font-size:14px;margin:0 0 20px">${greeting}</p>
+        <table style="width:100%;border-collapse:collapse">${rows}</table>
+        <p style="color:#8a8a93;font-size:12px;margin-top:20px">${note}</p>
+        <p style="color:#9a9aa3;font-size:12px;text-align:center;margin-top:24px">
+          Order ${orderId} · <a href="mailto:support@brainsait.com" style="color:#545EA9">support@brainsait.com</a>
+        </p>
+      </div>
+    </div>
+  </body></html>`;
+}
+
+async function sendDeliveryEmail(env, { customerEmail, customerName, language, orderId, items }) {
+  if (!env.RESEND_API_KEY || !env.RESEND_FROM_EMAIL || !customerEmail || items.length === 0) {
+    return { ok: false, skipped: true };
+  }
+  const subject =
+    language === "AR" ? `طلبك جاهز — ${orderId}` : `Your BrainSAIT order is ready — ${orderId}`;
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: env.RESEND_FROM_EMAIL,
+      to: [customerEmail],
+      subject,
+      html: renderDeliveryEmailHtml({ customerName, language, orderId, items }),
+    }),
+  });
+  if (!resp.ok) {
+    throw new Error(`resend:${resp.status}`);
+  }
+  return { ok: true };
+}
+
+async function notifyTelegramSale(env, { orderId, customerEmail, items, currency = "SAR" }) {
+  if (!env.DELIVERY_ADMIN_TOKEN) return { ok: false, skipped: true };
+  const total = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const lines = items.map((item) => `• ${item.productName} — ${item.amount} ${currency}`).join("\n");
+  const text = [
+    "🛒 New OID order fulfilled",
+    `Order: ${orderId}`,
+    `Customer: ${customerEmail || "unknown"}`,
+    lines,
+    `Total: ${total} ${currency}`,
+  ].join("\n");
+  const resp = await fetch(`${HUB_BASE_URL}/telegram/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hub-key": env.DELIVERY_ADMIN_TOKEN,
+    },
+    body: JSON.stringify({ text }),
+  });
+  if (!resp.ok) {
+    throw new Error(`telegram:${resp.status}`);
+  }
+  return { ok: true };
+}
+
+// Feeds the same purchase.fulfilled event stream the Hetzner-side hub already exposes at
+// GET /events -- n8n's "New Order Fanout" workflow and other Hermes-cron automation poll that
+// stream, but only ever saw PayPal/legacy-Shopify sales because this Worker fulfills entirely on
+// Cloudflare's edge and never touched the hub. One event per line item, not per order, to match
+// what that consumer already expects (product_id keyed).
+async function notifyHubEvents(env, { customerEmail, items, currency = "SAR" }) {
+  if (!env.DELIVERY_ADMIN_TOKEN) return { ok: false, skipped: true };
+  const results = await Promise.all(
+    items.map((item) =>
+      fetch(`${HUB_BASE_URL}/event/purchase-fulfilled`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hub-key": env.DELIVERY_ADMIN_TOKEN,
+        },
+        body: JSON.stringify({
+          product_id: item.sku,
+          customer_email: customerEmail,
+          source: "oid-shopify",
+          amount: item.amount,
+          currency,
+        }),
+      })
+    )
+  );
+  const failed = results.filter((resp) => !resp.ok);
+  if (failed.length > 0) {
+    throw new Error(`hub-event:${failed.map((resp) => resp.status).join(",")}`);
+  }
+  return { ok: true };
 }
 
 async function logToAirtable(env, record) {
@@ -302,7 +415,14 @@ async function handleOrderPaid(request, env) {
           "Download Count": 0,
           "Notes": `Order ${orderId} - unit ${unit} of ${quantity} - ${lineItem.name}`,
         });
-        fulfilled.push({ sku, unit, licenseKey });
+        fulfilled.push({
+          sku,
+          unit,
+          licenseKey,
+          productName: manifest.name,
+          deliveryUrl,
+          amount: Number(lineItem.price) || 0,
+        });
       } catch (error) {
         errors.push({ sku, unit, code: error.message });
       }
@@ -325,9 +445,42 @@ async function handleOrderPaid(request, env) {
     });
   }
 
+  const notifications = { email: null, telegram: null, hubEvents: null };
+  if (fulfilled.length > 0) {
+    try {
+      notifications.email = await sendDeliveryEmail(env, {
+        customerEmail,
+        customerName,
+        language,
+        orderId,
+        items: fulfilled,
+      });
+    } catch (error) {
+      console.error("delivery email failed", JSON.stringify({ orderId, error: error.message }));
+      notifications.email = { ok: false, error: error.message };
+    }
+    try {
+      notifications.telegram = await notifyTelegramSale(env, {
+        orderId,
+        customerEmail,
+        items: fulfilled,
+      });
+    } catch (error) {
+      console.error("telegram notify failed", JSON.stringify({ orderId, error: error.message }));
+      notifications.telegram = { ok: false, error: error.message };
+    }
+    try {
+      notifications.hubEvents = await notifyHubEvents(env, { customerEmail, items: fulfilled });
+    } catch (error) {
+      console.error("hub event feed failed", JSON.stringify({ orderId, error: error.message }));
+      notifications.hubEvents = { ok: false, error: error.message };
+    }
+  }
+
   return new Response(JSON.stringify({
     ok: true,
     fulfilled: fulfilled.length,
+    notifications,
     ignored,
   }), {
     status: 200,

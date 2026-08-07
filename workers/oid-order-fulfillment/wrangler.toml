@@ -7,12 +7,15 @@ compatibility_flags = ["nodejs_compat"]
 AIRTABLE_BASE_ID = "appE7sxyyLHrCQBSe"
 AIRTABLE_TABLE_NAME = "OID_Orders"
 DELIVERY_BASE_URL = "https://assets.brainsait.org"
+RESEND_FROM_EMAIL = "BrainSAIT <orders@brainsait.org>"
 
 # Secrets — set via: wrangler secret put <NAME>
 # SHOPIFY_WEBHOOK_SECRET   — copy from Shopify > Settings > Notifications > Webhooks
 # LICENSE_SIGNING_SECRET   — random 32+ byte secret; keep stable across webhook retries
 # DELIVERY_ADMIN_TOKEN     — same as ADMIN_TOKEN on brainsait-store-delivery worker
 # AIRTABLE_API_KEY         — Airtable personal access token with base:write scope
+# RESEND_API_KEY           — send-only Resend key, verified for the brainsait.org domain.
+#                            Optional: delivery email is skipped (not failed) when absent.
 
 [[routes]]
 pattern = "fulfillment.brainsait.org/*"
@@ -25,6 +28,7 @@ name = "oid-order-fulfillment"
 AIRTABLE_BASE_ID = "appE7sxyyLHrCQBSe"
 AIRTABLE_TABLE_NAME = "OID_Orders"
 DELIVERY_BASE_URL = "https://assets.brainsait.org"
+RESEND_FROM_EMAIL = "BrainSAIT <orders@brainsait.org>"
 
 [[env.production.routes]]
 pattern = "fulfillment.brainsait.org/*"

@@ -26,7 +26,16 @@ wrangler secret put SHOPIFY_WEBHOOK_SECRET
 wrangler secret put LICENSE_SIGNING_SECRET
 wrangler secret put DELIVERY_ADMIN_TOKEN
 wrangler secret put AIRTABLE_API_KEY
+wrangler secret put RESEND_API_KEY   # optional — customer delivery email is skipped, not failed, when absent
 ```
+
+`RESEND_FROM_EMAIL` is a plain `[vars]` entry in `wrangler.toml` (not a secret) — must stay on a
+domain verified in the Resend account the API key belongs to.
+
+On a successful order, the worker also POSTs an admin sale notification to
+`https://hub.brainsait.de/telegram/send` using the `DELIVERY_ADMIN_TOKEN` value as `X-Hub-Key`
+(the hub's Telegram relay accepts the same key as the delivery Worker's admin API). No separate
+secret needed; this silently no-ops if the hub is unreachable.
 
 The GitHub `production` environment must contain:
 
@@ -35,6 +44,7 @@ The GitHub `production` environment must contain:
 - `SHOPIFY_WEBHOOK_SECRET`
 - `LICENSE_SIGNING_SECRET`
 - `DELIVERY_ADMIN_TOKEN`
+- `RESEND_API_KEY` (optional)
 - `AIRTABLE_API_KEY`
 
 Protect the environment with required reviewers. The deployment workflow accepts production pushes and manual dispatches only from `main`.
