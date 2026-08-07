@@ -12,7 +12,7 @@ Shopify (orders/paid) ──POST──▶ oid-order-fulfillment
                       ┌─────────────────┼──────────────────┐
                       ▼                 ▼                   ▼
               Generate License    Call Delivery Worker   Log Airtable
-                Key (UUID)       POST /admin/licenses   OID_Orders table
+                Key (BSOID key)   POST /admin/licenses   OID_Orders table
                                   (x-hub-key auth)
                                         │
                                  KV: license record
