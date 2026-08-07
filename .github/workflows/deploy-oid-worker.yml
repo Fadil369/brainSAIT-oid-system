@@ -110,7 +110,7 @@ jobs:
           echo "can_deploy=true" >> "$GITHUB_OUTPUT"
 
       - name: Deploy with Wrangler
-        if: ${{ steps.check-secrets.outputs.can_deploy == 'true' }}
+        if: ${{ steps['check-secrets'].outputs.can_deploy == 'true' }}
         working-directory: ${{ env.WORKER_DIR }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
