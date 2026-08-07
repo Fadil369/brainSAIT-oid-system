@@ -18,28 +18,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     minify: 'esbuild',
-    sourcemap: false,
-    // Reduce chunk size
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['tailwindcss']
-        }
-      }
-    }
+    sourcemap: false
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom']
-  },
-  css: {
-    preprocessorOptions: {
-      postcss: {
-        plugins: [
-          require('autoprefixer'),
-          require('tailwindcss')
-        ]
-      }
-    }
+    include: ['react', 'react-dom']
   }
 })

@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS oids (
 CREATE INDEX IF NOT EXISTS idx_oids_full_oid ON oids(full_oid);
 CREATE INDEX IF NOT EXISTS idx_oids_user_id ON oids(user_id);
 
+CREATE SEQUENCE IF NOT EXISTS oid_suffix_seq START WITH 1004;
+
 -- Function to update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -40,3 +42,15 @@ VALUES
     ('1002', '1.3.6.1.4.1.61026.2.1002', '1.3.6.1.4.1.61026.2', 'developer', 'Developer Badge', 'developer', 'medium', '2027-01-01 00:00:00'),
     ('1003', '1.3.6.1.4.1.61026.2.1003', '1.3.6.1.4.1.61026.2', 'user', 'Basic User Badge', 'user', 'low', '2026-01-01 00:00:00')
 ON CONFLICT (oid) DO NOTHING;
+
+SELECT setval(
+    'oid_suffix_seq',
+    GREATEST(
+        (SELECT last_value FROM oid_suffix_seq),
+        COALESCE(
+            (SELECT MAX(oid::BIGINT) FROM oids WHERE oid ~ '^[0-9]+$'),
+            1003
+        ),
+        1003
+    )
+);

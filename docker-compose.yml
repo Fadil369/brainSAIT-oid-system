@@ -1,35 +1,43 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=oid_registry
-      - DB_USER=oid_admin
-      - DB_PASS=supersecurepassword
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: oid_registry
+      DB_USER: oid_admin
+      DB_PASS: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the environment}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     build: ./oid-portal
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+    restart: unless-stopped
 
   db:
-    image: postgres:14
-    restart: always
+    image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: oid_registry
       POSTGRES_USER: oid_admin
-      POSTGRES_PASSWORD: supersecurepassword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the environment}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oid_admin -d oid_registry"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
 
 volumes:
   pgdata:

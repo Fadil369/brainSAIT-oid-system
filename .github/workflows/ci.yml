@@ -2,124 +2,164 @@ name: BrainSAIT OID System CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  test-backend:
+  backend:
+    name: Backend integration
     runs-on: ubuntu-latest
-    
+    env:
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: oid_registry
+      DB_USER: oid_admin
+      DB_PASS: ci-test-password
+
     services:
       postgres:
-        image: postgres:14
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: oid_registry
           POSTGRES_USER: oid_admin
-          POSTGRES_PASSWORD: supersecurepassword
+          POSTGRES_PASSWORD: ci-test-password
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
+          --health-cmd "pg_isready -U oid_admin -d oid_registry"
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
-    
+          --health-retries 10
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        
-    - name: Install dependencies
-      run: |
-        cd backend
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        
-    - name: Initialize database
-      run: |
-        export PGPASSWORD=supersecurepassword
-        psql -h localhost -U oid_admin -d oid_registry -f backend/init.sql
-        
-    - name: Test backend
-      run: |
-        cd backend
-        # Run pytest or any other test framework
-        python -c "
-import requests
-import time
-import os
+      - name: Checkout
+        uses: actions/checkout@v5
 
-# Start the server
-import subprocess
-server = subprocess.Popen(['uvicorn', 'main:app', '--host', '0.0.0.0', '--port', '8000'])
-time.sleep(5)  # Wait for server to start
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
 
-# Run tests
-try:
-    # GET /oids
-    response = requests.get('http://localhost:8000/oids')
-    assert response.status_code == 200, f'GET /oids failed with status {response.status_code}'
-    print('✅ GET /oids test passed')
-    
-    # POST /oids
-    response = requests.post('http://localhost:8000/oids', json={
-        'user_id': 'test_user',
-        'name': 'Test Badge',
-        'role': 'tester',
-        'access_level': 'low',
-        'expires': '2026-01-01T00:00:00'
-    })
-    assert response.status_code == 200, f'POST /oids failed with status {response.status_code}'
-    print('✅ POST /oids test passed')
-    
-    # Error handling
-    response = requests.put('http://localhost:8000/oids/99999', json={
-        'user_id': 'invalid_user',
-        'name': 'Invalid Badge',
-        'role': 'invalid',
-        'access_level': 'invalid',
-        'expires': 'invalid-date'
-    })
-    assert response.status_code in [400, 404, 422], f'Error handling test unexpected status: {response.status_code}'
-    print('✅ Error handling test passed')
-    
-    print('All backend tests passed!')
-except Exception as e:
-    print(f'❌ Tests failed: {e}')
-    exit(1)
-finally:
-    # Terminate server
-    server.terminate()
-"
-        
-  test-frontend:
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Initialize database
+        env:
+          PGPASSWORD: ci-test-password
+        run: psql -h localhost -U oid_admin -d oid_registry -f backend/init.sql
+
+      - name: Run API integration checks
+        run: |
+          set -euo pipefail
+          cd backend
+          uvicorn main:app --host 127.0.0.1 --port 8000 > /tmp/oid-api.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"; wait "$server_pid" || true' EXIT
+
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 20 ]; then
+              cat /tmp/oid-api.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          curl --fail --silent http://127.0.0.1:8000/oids | jq -e 'length >= 3'
+
+          created_oid="$(
+            curl --fail --silent \
+              -X POST http://127.0.0.1:8000/oids \
+              -H "Content-Type: application/json" \
+              -d '{"user_id":"ci-user","name":"CI Badge","role":"tester","access_level":"low","expires":"2027-01-01T00:00:00Z"}' |
+              jq -r '.oid'
+          )"
+          test -n "$created_oid"
+          curl --fail --silent "http://127.0.0.1:8000/oids/$created_oid" |
+            jq -e '.user_id == "ci-user"'
+
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            -X PUT http://127.0.0.1:8000/oids/does-not-exist \
+            -H "Content-Type: application/json" \
+            -d '{"user_id":"ci-user","name":"Missing","role":"tester","access_level":"low","expires":"2027-01-01T00:00:00Z"}')" = "404"
+
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' \
+            -X POST http://127.0.0.1:8000/oids \
+            -H "Content-Type: application/json" \
+            -d '{"user_id":"ci-user","name":"Invalid","role":"tester","access_level":"low","expires":"not-a-date"}')" = "422"
+
+          curl --fail --silent -X DELETE "http://127.0.0.1:8000/oids/$created_oid" |
+            jq -e '.status == "deleted"'
+
+  frontend:
+    name: Frontend lint and build
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
-        
-    - name: Install dependencies
-      run: |
-        cd oid-portal
-        npm ci
-        
-    - name: Build frontend
-      run: |
-        cd oid-portal
-        npm run build
-        
-    - name: Test frontend
-      run: |
-        cd oid-portal
-        # Run frontend tests (when they exist)
-        # npm test
-        echo "Frontend build successful"
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: oid-portal/package-lock.json
+
+      - name: Install dependencies
+        working-directory: oid-portal
+        run: npm ci
+
+      - name: Audit production dependencies
+        working-directory: oid-portal
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Lint
+        working-directory: oid-portal
+        run: npm run lint
+
+      - name: Build
+        working-directory: oid-portal
+        run: npm run build
+
+  worker:
+    name: Worker validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: workers/oid-order-fulfillment/package-lock.json
+
+      - name: Install dependencies
+        working-directory: workers/oid-order-fulfillment
+        run: npm ci
+
+      - name: Audit production dependencies
+        working-directory: workers/oid-order-fulfillment
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Test fulfillment behavior
+        working-directory: workers/oid-order-fulfillment
+        run: npm test
+
+      - name: Validate bundle
+        working-directory: workers/oid-order-fulfillment
+        run: npm run deploy -- --dry-run --env production --outdir /tmp/oid-worker-dist

@@ -18,7 +18,7 @@ A modern web application for managing Object Identifier (OID) badges within the 
 
 ### Frontend
 - React.js with Hooks
-- React Router v6 for navigation
+- Lightweight browser-history routing
 - TailwindCSS for styling
 - Modern JavaScript (ES6+)
 
@@ -31,7 +31,7 @@ A modern web application for managing Object Identifier (OID) badges within the 
 ## 📋 Requirements
 
 - Docker and Docker Compose
-- Node.js v16+ (for local development)
+- Node.js 22+ (for local development)
 - Python 3.11+ (for local development)
 
 ## 🔧 Installation
@@ -44,15 +44,20 @@ A modern web application for managing Object Identifier (OID) badges within the 
    cd brainSAIT-oid-system
    ```
 
-2. Start the Docker containers
+2. Configure a local database password
+   ```bash
+   cp .env.example .env
+   # Replace the example value before starting the stack.
+   ```
+
+3. Start the Docker containers
    ```bash
    docker-compose up -d
    ```
 
-3. Access the application
+4. Access the application
    - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
+   - Backend API through the frontend proxy: http://localhost:3000/api
 
 ### Manual Setup (Development)
 
@@ -72,7 +77,7 @@ A modern web application for managing Object Identifier (OID) badges within the 
 
 3. Start the backend server
    ```bash
-   uvicorn main:app --reload
+   DB_PASS='<local-database-password>' uvicorn main:app --reload
    ```
 
 #### Frontend
@@ -111,7 +116,9 @@ This script performs:
 The API documentation is available at http://localhost:8000/docs when the backend is running.
 
 Key endpoints:
+- `GET /health` - Service health
 - `GET /oids` - List all OID badges
+- `GET /oids/{oid}` - Retrieve an OID badge
 - `POST /oids` - Register a new OID badge
 - `PUT /oids/{oid}` - Update an existing badge
 - `DELETE /oids/{oid}` - Revoke a badge
@@ -120,7 +127,7 @@ Key endpoints:
 
 ### Production Deployment
 
-For production environments, update the Docker Compose configuration with appropriate environment variables and security settings.
+For production environments, supply secrets through the deployment platform, keep the backend on a private network, and protect the frontend/API with an identity-aware proxy such as Cloudflare Access. Do not embed API or database credentials in the browser bundle.
 
 ```bash
 # Example production deployment
@@ -155,7 +162,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## ⚠️ Security Notice
 
-This application is designed for internal use within the BrainSAIT organization. It contains sensitive OID management capabilities and should be deployed securely.
+This application is designed for internal use within the BrainSAIT organization. It contains sensitive OID management capabilities and must be placed behind organization authentication before production use.
 
 ## 🙏 Acknowledgements
 
