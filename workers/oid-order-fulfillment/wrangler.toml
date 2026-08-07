@@ -1,0 +1,31 @@
+name = "oid-order-fulfillment"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+AIRTABLE_BASE_ID = "appE7sxyyLHrCQBSe"
+AIRTABLE_TABLE_NAME = "OID_Orders"
+DELIVERY_BASE_URL = "https://assets.brainsait.org"
+
+# Secrets — set via: wrangler secret put <NAME>
+# SHOPIFY_WEBHOOK_SECRET   — copy from Shopify > Settings > Notifications > Webhooks
+# LICENSE_SIGNING_SECRET   — random 32+ byte secret; keep stable across webhook retries
+# DELIVERY_ADMIN_TOKEN     — same as ADMIN_TOKEN on brainsait-store-delivery worker
+# AIRTABLE_API_KEY         — Airtable personal access token with base:write scope
+
+[[routes]]
+pattern = "fulfillment.brainsait.org/*"
+zone_name = "brainsait.org"
+
+[env.production]
+name = "oid-order-fulfillment"
+
+[env.production.vars]
+AIRTABLE_BASE_ID = "appE7sxyyLHrCQBSe"
+AIRTABLE_TABLE_NAME = "OID_Orders"
+DELIVERY_BASE_URL = "https://assets.brainsait.org"
+
+[[env.production.routes]]
+pattern = "fulfillment.brainsait.org/*"
+zone_name = "brainsait.org"

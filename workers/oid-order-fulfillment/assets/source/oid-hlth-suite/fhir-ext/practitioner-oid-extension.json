@@ -1,0 +1,31 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "brainsait-practitioner-oid",
+  "url": "https://fhir.brainsait.org/StructureDefinition/practitioner-oid",
+  "version": "1.0.0",
+  "name": "BrainSAITPractitionerOID",
+  "status": "active",
+  "description": "BrainSAIT OID identifier for healthcare practitioners (IANA PEN 61026)",
+  "fhirVersion": "4.0.1",
+  "kind": "complex-type",
+  "abstract": false,
+  "context": [{"type": "element", "expression": "Practitioner"}],
+  "type": "Extension",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Extension",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "Extension.url",
+        "path": "Extension.url",
+        "fixedUri": "https://fhir.brainsait.org/StructureDefinition/practitioner-oid"
+      },
+      {
+        "id": "Extension.value[x]",
+        "path": "Extension.value[x]",
+        "type": [{"code": "oid"}],
+        "patternOid": "urn:oid:1.3.6.1.4.1.61026.3.2.1"
+      }
+    ]
+  }
+}

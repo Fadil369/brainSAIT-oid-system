@@ -1,0 +1,519 @@
+name: Deploy OID Fulfillment Worker & Upload Assets
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "workers/oid-order-fulfillment/**"
+      - ".github/workflows/deploy-oid-worker.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "workers/oid-order-fulfillment/**"
+      - ".github/workflows/deploy-oid-worker.yml"
+  workflow_dispatch:
+    inputs:
+      upload_assets:
+        description: "Upload product assets to R2"
+        type: boolean
+        default: true
+      deploy_worker:
+        description: "Deploy fulfillment worker"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  WORKER_DIR: workers/oid-order-fulfillment
+  ASSETS_DIR: workers/oid-order-fulfillment/assets/source
+  DELIVERY_BASE_URL: https://assets.brainsait.org
+
+jobs:
+  # ── 1. Validate the Worker without production credentials ────
+  validate-worker:
+    name: Validate oid-order-fulfillment Worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ${{ env.WORKER_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKER_DIR }}
+        run: npm ci
+
+      - name: Validate Wrangler configuration and bundle
+        working-directory: ${{ env.WORKER_DIR }}
+        run: npm run deploy -- --dry-run --env production --outdir /tmp/oid-worker-dist
+
+  # ── 2. Deploy the Fulfillment Worker ─────────────────────────
+  deploy-worker:
+    name: Deploy oid-order-fulfillment Worker
+    runs-on: ubuntu-latest
+    needs: validate-worker
+    environment: production
+    if: >-
+      ${{
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' &&
+         github.ref == 'refs/heads/main' &&
+         github.event.inputs.deploy_worker != 'false')
+      }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ${{ env.WORKER_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKER_DIR }}
+        run: npm ci
+
+      - name: Validate deployment secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SHOPIFY_WEBHOOK_SECRET: ${{ secrets.SHOPIFY_WEBHOOK_SECRET }}
+          LICENSE_SIGNING_SECRET: ${{ secrets.LICENSE_SIGNING_SECRET }}
+          DELIVERY_ADMIN_TOKEN: ${{ secrets.DELIVERY_ADMIN_TOKEN }}
+          AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::CLOUDFLARE_API_TOKEN is not configured"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not configured"; exit 1; }
+          test -n "$SHOPIFY_WEBHOOK_SECRET" || { echo "::error::SHOPIFY_WEBHOOK_SECRET is not configured"; exit 1; }
+          test -n "$LICENSE_SIGNING_SECRET" || { echo "::error::LICENSE_SIGNING_SECRET is not configured"; exit 1; }
+          test -n "$DELIVERY_ADMIN_TOKEN" || { echo "::error::DELIVERY_ADMIN_TOKEN is not configured"; exit 1; }
+          test -n "$AIRTABLE_API_KEY" || { echo "::error::AIRTABLE_API_KEY is not configured"; exit 1; }
+
+      - name: Deploy with Wrangler
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy -- --env production
+
+      - name: Set Worker Secrets
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "${{ secrets.SHOPIFY_WEBHOOK_SECRET }}" | npx wrangler secret put SHOPIFY_WEBHOOK_SECRET --env production
+          echo "${{ secrets.LICENSE_SIGNING_SECRET }}" | npx wrangler secret put LICENSE_SIGNING_SECRET --env production
+          echo "${{ secrets.DELIVERY_ADMIN_TOKEN }}" | npx wrangler secret put DELIVERY_ADMIN_TOKEN --env production
+          echo "${{ secrets.AIRTABLE_API_KEY }}" | npx wrangler secret put AIRTABLE_API_KEY --env production
+
+  # ── 3. Package and Upload Assets to R2 ───────────────────────
+  upload-assets:
+    name: Package & Upload Product Assets to R2
+    runs-on: ubuntu-latest
+    environment: production
+    if: >-
+      ${{
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' &&
+         github.ref == 'refs/heads/main' &&
+         github.event.inputs.upload_assets != 'false')
+      }}
+    needs: validate-worker
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate upload secret
+        env:
+          ADMIN_TOKEN: ${{ secrets.DELIVERY_ADMIN_TOKEN }}
+        run: |
+          test -n "$ADMIN_TOKEN" || { echo "::error::ADMIN_TOKEN is not configured"; exit 1; }
+
+      - name: Install zip utility
+        run: sudo apt-get install -y zip
+
+      - name: Create output directory
+        run: mkdir -p /tmp/oid-assets
+
+      - name: Package OID Starter Kit
+        run: |
+          cd $ASSETS_DIR/oid-starter
+          zip -r /tmp/oid-assets/oid-starter-templates.zip .
+          cp README.md /tmp/oid-assets/oid-namespace-starter-guide.html
+
+      - name: Package OID Developer Suite (SDK)
+        run: |
+          cd $ASSETS_DIR/oid-developer
+          zip -r /tmp/oid-assets/oid-sdk.zip sdk/
+          zip -r /tmp/oid-assets/oid-code-examples.zip examples/
+          echo "# OID Developer Suite Documentation" > /tmp/oid-assets/oid-developer-docs.html
+          echo "See oid-sdk.zip for the full TypeScript SDK" >> /tmp/oid-assets/oid-developer-docs.html
+
+      - name: Package Healthcare Bundle
+        run: |
+          cd $ASSETS_DIR/oid-healthcare
+          zip -r /tmp/oid-assets/fhir-namespace-bundle.zip fhir-namespace-bundle.json nphies-fhir-profiles.json ihe-iti-oid-mappings.json
+          cp dicom-uid-allocation.md /tmp/oid-assets/dicom-uid-guide.html
+          zip -r /tmp/oid-assets/hl7-templates.zip . --exclude="*.zip"
+
+      - name: Package Enterprise Platform
+        run: |
+          cd $ASSETS_DIR/oid-enterprise
+          zip -r /tmp/oid-assets/enterprise-platform.zip .
+          cp README.md /tmp/oid-assets/enterprise-docs.html
+          zip -r /tmp/oid-assets/enterprise-config-templates.zip enterprise-config.yaml nginx-oid-routing.conf docker-compose.yml
+
+      - name: Package Badge System
+        run: |
+          cd $ASSETS_DIR/oid-badge
+          zip -r /tmp/oid-assets/badge-system-source.zip .
+          cp README.md /tmp/oid-assets/badge-system-docs.html
+
+      - name: Package Enterprise Architect
+        run: |
+          cd $ASSETS_DIR/oid-ent-arch
+          zip -r /tmp/oid-assets/namespace-architect-kit.zip .
+          zip -r /tmp/oid-assets/fhir-namespace-bundle-r4-r5.zip fhir-bundle/
+          zip -r /tmp/oid-assets/mcp-urn-schemas.zip mcp-schemas/
+          cp x509-policy-comprehensive.conf /tmp/oid-assets/x509-policy-comprehensive.conf
+          cp README.md /tmp/oid-assets/enterprise-architect-docs.html
+          echo "# Portal Access Guide\n\nPortal: https://portal.brainsait.com\nEmail: architect@brainsait.com" > /tmp/oid-assets/portal-access-guide.html
+
+      - name: Package Healthcare Suite
+        run: |
+          cd $ASSETS_DIR/oid-hlth-suite
+          zip -r /tmp/oid-assets/healthcare-ai-identity-suite.zip .
+          zip -r /tmp/oid-assets/fhir-extension-registry.zip fhir-ext/
+          zip -r /tmp/oid-assets/audit-trail-oid-schema.zip audit-schema/
+          cp snomed-ct-oid-mapping.json /tmp/oid-assets/snomed-ct-oid-mapping.json
+          cp README.md /tmp/oid-assets/dicom-uid-allocation-block.html
+          cp README.md /tmp/oid-assets/hipaa-namespace-documentation.html
+
+      - name: Package FHIR Platform
+        run: |
+          cd $ASSETS_DIR/oid-fhir-platform
+          zip -r /tmp/oid-assets/fhir-integration-toolkit.zip toolkit/
+          zip -r /tmp/oid-assets/ig-template-with-oid.zip ig-template/
+          zip -r /tmp/oid-assets/fsh-template-library.zip fsh-library/
+          zip -r /tmp/oid-assets/structuredefinition-oid-migration.zip migration/
+          cp README.md /tmp/oid-assets/fhir-platform-docs.html
+
+      - name: Package White-Label Enterprise
+        run: |
+          cd $ASSETS_DIR/oid-white-label
+          zip -r /tmp/oid-assets/white-label-enterprise-package.zip .
+          zip -r /tmp/oid-assets/oid-portal-react-source.zip portal-source/
+          cp reseller-guide.md /tmp/oid-assets/reseller-setup-guide.html
+          cp README.md /tmp/oid-assets/multitenant-architecture-docs.html
+          zip -r /tmp/oid-assets/white-label-brand-kit.zip brand-kit/
+
+      - name: List packaged assets
+        run: ls -lh /tmp/oid-assets/
+
+      - name: Upload OID Starter Guide
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-starter/oid-namespace-starter-guide.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/oid-namespace-starter-guide.html
+
+      - name: Upload OID Starter Templates ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-starter/oid-templates.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/oid-starter-templates.zip
+
+      - name: Upload Developer SDK ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-developer/oid-sdk.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/oid-sdk.zip
+
+      - name: Upload Developer Docs
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-developer/oid-developer-docs.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/oid-developer-docs.html
+
+      - name: Upload Developer Examples ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-developer/oid-code-examples.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/oid-code-examples.zip
+
+      - name: Upload Healthcare FHIR Bundle ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-healthcare/fhir-namespace-bundle.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/fhir-namespace-bundle.zip
+
+      - name: Upload DICOM UID Guide
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-healthcare/dicom-uid-guide.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/dicom-uid-guide.html
+
+      - name: Upload HL7 Templates ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-healthcare/hl7-templates.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/hl7-templates.zip
+
+      - name: Upload Enterprise Platform ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-enterprise/enterprise-platform.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/enterprise-platform.zip
+
+      - name: Upload Enterprise Docs
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-enterprise/enterprise-docs.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/enterprise-docs.html
+
+      - name: Upload Enterprise Config Templates ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-enterprise/enterprise-config-templates.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/enterprise-config-templates.zip
+
+      - name: Upload Badge System Source ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-badge/badge-system-source.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/badge-system-source.zip
+
+      - name: Upload Badge System Docs
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-badge/badge-system-docs.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/badge-system-docs.html
+
+      - name: Upload Enterprise Architect Kit ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-ent-arch/namespace-architect-kit.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/namespace-architect-kit.zip
+
+      - name: Upload FHIR R4/R5 Bundle ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-ent-arch/fhir-namespace-bundle-r4-r5.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/fhir-namespace-bundle-r4-r5.zip
+
+      - name: Upload MCP URN Schemas ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-ent-arch/mcp-urn-schemas.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/mcp-urn-schemas.zip
+
+      - name: Upload X.509 Policy OIDs
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-ent-arch/x509-policy-oids.conf" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/plain" \
+            --data-binary @/tmp/oid-assets/x509-policy-comprehensive.conf
+
+      - name: Upload Enterprise Architect Docs
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-ent-arch/enterprise-architect-docs.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/enterprise-architect-docs.html
+
+      - name: Upload Portal Access Guide
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-ent-arch/portal-access-guide.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/portal-access-guide.html
+
+      - name: Upload Healthcare AI Identity Suite ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-hlth-suite/healthcare-ai-identity-suite.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/healthcare-ai-identity-suite.zip
+
+      - name: Upload DICOM UID Allocation Block
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-hlth-suite/dicom-uid-allocation-block.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/dicom-uid-allocation-block.html
+
+      - name: Upload FHIR Extension Registry ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-hlth-suite/fhir-extension-registry.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/fhir-extension-registry.zip
+
+      - name: Upload SNOMED CT OID Mapping
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-hlth-suite/snomed-ct-oid-mapping.json" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/oid-assets/snomed-ct-oid-mapping.json
+
+      - name: Upload HIPAA Namespace Documentation
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-hlth-suite/hipaa-namespace-documentation.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/hipaa-namespace-documentation.html
+
+      - name: Upload Audit Trail OID Schema ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-hlth-suite/audit-trail-oid-schema.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/audit-trail-oid-schema.zip
+
+      - name: Upload FHIR Integration Toolkit ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-fhir-platform/fhir-integration-toolkit.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/fhir-integration-toolkit.zip
+
+      - name: Upload IG Template with OID ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-fhir-platform/ig-template-with-oid.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/ig-template-with-oid.zip
+
+      - name: Upload FSH Template Library ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-fhir-platform/fsh-template-library.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/fsh-template-library.zip
+
+      - name: Upload StructureDefinition OID Migration ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-fhir-platform/structuredefinition-oid-migration.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/structuredefinition-oid-migration.zip
+
+      - name: Upload FHIR Platform Docs
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-fhir-platform/fhir-platform-docs.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/fhir-platform-docs.html
+
+      - name: Upload White-Label Enterprise Package ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-white-label/white-label-enterprise-package.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/white-label-enterprise-package.zip
+
+      - name: Upload OID Portal React Source ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-white-label/oid-portal-react-source.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/oid-portal-react-source.zip
+
+      - name: Upload Reseller Setup Guide
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-white-label/reseller-setup-guide.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/reseller-setup-guide.html
+
+      - name: Upload Multitenant Architecture Docs
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-white-label/multitenant-architecture-docs.html" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: text/html" \
+            --data-binary @/tmp/oid-assets/multitenant-architecture-docs.html
+
+      - name: Upload White-Label Brand Kit ZIP
+        run: |
+          curl -sf -X PUT \
+            "${{ env.DELIVERY_BASE_URL }}/admin/objects/products/oid-white-label/white-label-brand-kit.zip" \
+            -H "x-hub-key: ${{ secrets.DELIVERY_ADMIN_TOKEN }}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @/tmp/oid-assets/white-label-brand-kit.zip
+
+      - name: Summary
+        run: |
+          echo "✅ All product assets uploaded to R2 (brainsait-assets)"
+          echo ""
+          echo "Fulfillment worker deployed at: https://fulfillment.brainsait.org"
+          echo ""
+          echo "Next steps:"
+          echo "  1. Register Shopify webhook:"
+          echo "     POST https://fulfillment.brainsait.org/webhooks/shopify/orders-paid"
+          echo "  2. Verify worker status:"
+          echo "     GET https://fulfillment.brainsait.org/admin/status"
+          echo "     -H 'x-hub-key: <DELIVERY_ADMIN_TOKEN>'"

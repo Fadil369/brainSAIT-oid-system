@@ -1,0 +1,17 @@
+{
+  "name": "@brainsait/oid-client",
+  "version": "1.0.0",
+  "description": "BrainSAIT OID Client SDK — IANA PEN 61026 identity utilities for FHIR, MCP, X.509, REST API, DB, and QR/RFID",
+  "main": "dist/oid-client.js",
+  "types": "dist/oid-client.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node test.js"
+  },
+  "keywords": ["oid", "fhir", "mcp", "iana-pen", "brainsait", "x509", "namespace"],
+  "author": "BrainSAIT <dev@brainsait.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BrainSAIT OID URN Schema",
+  "description": "URN schema for BrainSAIT OID namespace (IANA PEN 61026)",
+  "type": "object",
+  "properties": {
+    "urn": {
+      "type": "string",
+      "pattern": "^urn:oid:1\\.3\\.6\\.1\\.4\\.1\\.61026(\\.[0-9]+)*$",
+      "description": "URN representation of a BrainSAIT OID"
+    },
+    "oid": {
+      "type": "string",
+      "pattern": "^1\\.3\\.6\\.1\\.4\\.1\\.61026(\\.[0-9]+)*$",
+      "description": "Dotted decimal OID notation"
+    }
+  },
+  "required": ["oid"]
+}

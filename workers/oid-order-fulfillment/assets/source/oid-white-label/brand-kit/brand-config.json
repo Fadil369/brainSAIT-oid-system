@@ -1,0 +1,10 @@
+{
+  "brandName": "Your Organization",
+  "primaryColor": "#0066CC",
+  "secondaryColor": "#003380",
+  "logoUrl": "/assets/logo.svg",
+  "faviconUrl": "/assets/favicon.ico",
+  "supportEmail": "support@your-org.com",
+  "portalTitle": "OID Identity Portal",
+  "footerText": "Powered by BrainSAIT OID Infrastructure (IANA PEN 61026)"
+}

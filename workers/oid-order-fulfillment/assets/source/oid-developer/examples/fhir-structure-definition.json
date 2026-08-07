@@ -1,0 +1,39 @@
+{
+  "resourceType": "StructureDefinition",
+  "id": "brainsait-oid-extension",
+  "url": "http://brainsait.com/fhir/StructureDefinition/brainsait-oid",
+  "version": "1.0.0",
+  "name": "BrainSAITOIDExtension",
+  "title": "BrainSAIT OID Namespace Extension",
+  "status": "active",
+  "experimental": false,
+  "date": "2026-01-01",
+  "publisher": "BrainSAIT",
+  "description": "Extension for attaching a BrainSAIT OID (IANA PEN 61026) to any FHIR resource.",
+  "fhirVersion": "4.0.1",
+  "kind": "complex-type",
+  "abstract": false,
+  "context": [{ "type": "element", "expression": "Element" }],
+  "type": "Extension",
+  "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Extension",
+  "derivation": "constraint",
+  "differential": {
+    "element": [
+      {
+        "id": "Extension.value[x]",
+        "path": "Extension.value[x]",
+        "type": [{ "code": "Coding" }],
+        "example": [
+          {
+            "label": "NPHIES Connector",
+            "valueCoding": {
+              "system": "urn:oid:1.3.6.1.4.1.61026.3.2",
+              "code": "3.2.3",
+              "display": "NPHIES Connector Service"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

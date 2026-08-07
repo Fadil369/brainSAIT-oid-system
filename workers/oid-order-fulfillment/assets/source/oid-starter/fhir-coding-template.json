@@ -1,0 +1,48 @@
+{
+  "$schema": "https://brainsait.com/schemas/oid-templates/v1",
+  "description": "BrainSAIT OID FHIR Coding Templates — IANA PEN 61026",
+  "templates": {
+    "nphies_connector": {
+      "_comment": "Use for NPHIES FHIR integration resources",
+      "coding": {
+        "system": "urn:oid:1.3.6.1.4.1.61026.3.2.3",
+        "code": "REPLACE_WITH_YOUR_CODE",
+        "display": "REPLACE_WITH_DISPLAY_NAME"
+      },
+      "codeableConcept": {
+        "coding": [
+          {
+            "system": "urn:oid:1.3.6.1.4.1.61026.3.2.3",
+            "code": "REPLACE_WITH_YOUR_CODE",
+            "display": "REPLACE_WITH_DISPLAY_NAME"
+          }
+        ],
+        "text": "REPLACE_WITH_TEXT"
+      }
+    },
+    "ai_agent": {
+      "_comment": "Use for Healthcare AI Agent resources",
+      "coding": {
+        "system": "urn:oid:1.3.6.1.4.1.61026.3.3",
+        "code": "REPLACE_WITH_YOUR_CODE",
+        "display": "REPLACE_WITH_DISPLAY_NAME"
+      }
+    },
+    "custom_node": {
+      "_comment": "Use for your custom OID node under 1.3.6.1.4.1.61026.5.*",
+      "coding": {
+        "system": "urn:oid:1.3.6.1.4.1.61026.5.REPLACE_WITH_NODE",
+        "code": "REPLACE_WITH_YOUR_CODE",
+        "display": "REPLACE_WITH_DISPLAY_NAME"
+      }
+    }
+  },
+  "extension_template": {
+    "url": "http://brainsait.com/fhir/StructureDefinition/brainsait-oid",
+    "valueCoding": {
+      "system": "urn:oid:1.3.6.1.4.1.61026.REPLACE_WITH_SUBPATH",
+      "code": "REPLACE_WITH_YOUR_CODE",
+      "display": "REPLACE_WITH_DISPLAY_NAME"
+    }
+  }
+}
