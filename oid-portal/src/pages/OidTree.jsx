@@ -5,7 +5,9 @@ import { getAllBadges } from '../services/api';
 const ROOT_OID = '1.3.6.1.4.1.61026';
 
 function toStatus(expires) {
-  const parsed = new Date(expires);
+  const raw = typeof expires === 'string' ? expires : '';
+  const normalized = raw && !/(Z|[+-]\d\d:\d\d)$/.test(raw) ? `${raw}Z` : raw;
+  const parsed = new Date(normalized || expires);
   if (Number.isNaN(parsed.getTime())) {
     return 'unknown';
   }
