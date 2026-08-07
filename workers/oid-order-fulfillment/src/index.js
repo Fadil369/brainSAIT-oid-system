@@ -109,13 +109,12 @@ const SKU_ASSETS = {
   },
 };
 
-function generateLicenseKey(orderId, sku) {
+function generateLicenseKey(sku) {
   const prefix = sku.replace(/[^A-Z0-9]/g, "").slice(0, 8);
   const ts = Date.now().toString(36).toUpperCase();
-  const orderPart = String(orderId).slice(-6);
   const bytes = crypto.getRandomValues(new Uint8Array(8));
   const rand = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
-  return `BSOID-${prefix}${orderPart}-${ts}-${rand}`;
+  return `BSOID-${prefix}-${ts}-${rand}`;
 }
 
 async function verifyShopifyHmac(request, secret) {
@@ -201,7 +200,7 @@ async function handleOrderPaid(request, env) {
     if (!sku || !SKU_ASSETS[sku]) continue;
 
     const manifest = SKU_ASSETS[sku];
-    const licenseKey = generateLicenseKey(orderId, sku);
+    const licenseKey = generateLicenseKey(sku);
     const expiresAt = new Date(Date.now() + manifest.expiresInDays * 86400 * 1000).toISOString();
     const deliveryUrl = `${DELIVERY_BASE_URL}/deliver/${licenseKey}`;
 
