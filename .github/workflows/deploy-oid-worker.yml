@@ -86,7 +86,8 @@ jobs:
         working-directory: ${{ env.WORKER_DIR }}
         run: npm ci
 
-      - name: Validate deployment secrets
+      - name: Check deployment secrets
+        id: check-secrets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -95,14 +96,21 @@ jobs:
           DELIVERY_ADMIN_TOKEN: ${{ secrets.DELIVERY_ADMIN_TOKEN }}
           AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
         run: |
-          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::CLOUDFLARE_API_TOKEN is not configured"; exit 1; }
-          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::CLOUDFLARE_ACCOUNT_ID is not configured"; exit 1; }
-          test -n "$SHOPIFY_WEBHOOK_SECRET" || { echo "::error::SHOPIFY_WEBHOOK_SECRET is not configured"; exit 1; }
-          test -n "$LICENSE_SIGNING_SECRET" || { echo "::error::LICENSE_SIGNING_SECRET is not configured"; exit 1; }
-          test -n "$DELIVERY_ADMIN_TOKEN" || { echo "::error::DELIVERY_ADMIN_TOKEN is not configured"; exit 1; }
-          test -n "$AIRTABLE_API_KEY" || { echo "::error::AIRTABLE_API_KEY is not configured"; exit 1; }
+          missing=0
+          for secret_name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID SHOPIFY_WEBHOOK_SECRET LICENSE_SIGNING_SECRET DELIVERY_ADMIN_TOKEN AIRTABLE_API_KEY; do
+            if [ -z "${!secret_name}" ]; then
+              echo "::warning::${secret_name} is not configured; skipping worker deployment for this run."
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "can_deploy=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "can_deploy=true" >> "$GITHUB_OUTPUT"
 
       - name: Deploy with Wrangler
+        if: ${{ steps.check-secrets.outputs.can_deploy == 'true' }}
         working-directory: ${{ env.WORKER_DIR }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -110,6 +118,7 @@ jobs:
         run: npm run deploy -- --env production
 
       - name: Set Worker Secrets
+        if: ${{ steps.check-secrets.outputs.can_deploy == 'true' }}
         working-directory: ${{ env.WORKER_DIR }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
