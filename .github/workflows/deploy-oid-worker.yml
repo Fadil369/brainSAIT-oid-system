@@ -515,11 +515,8 @@ jobs:
         run: |
           echo "✅ All product assets uploaded to R2 (brainsait-assets)"
           echo ""
-          echo "Fulfillment worker deployed at: https://fulfillment.brainsait.org"
-          echo ""
           echo "Next steps:"
           echo "  1. Register Shopify webhook:"
           echo "     POST https://fulfillment.brainsait.org/webhooks/shopify/orders-paid"
-          echo "  2. Verify worker status:"
-          echo "     GET https://fulfillment.brainsait.org/admin/status"
-          echo "     -H 'x-hub-key: <DELIVERY_ADMIN_TOKEN>'"
+          echo "  2. Verify worker health:"
+          echo "     GET https://fulfillment.brainsait.org/health"
