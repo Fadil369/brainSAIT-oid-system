@@ -35,7 +35,7 @@ function buildOidTree(badges) {
     let currentPath = '';
     let parent = null;
 
-    for (const part of parts) {
+    for (const part of fullOid.split('.')) {
       currentPath = currentPath ? `${currentPath}.${part}` : part;
 
       if (!nodeMap.has(currentPath)) {
