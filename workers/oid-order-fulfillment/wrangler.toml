@@ -16,3 +16,15 @@ DELIVERY_BASE_URL = "https://assets.brainsait.org"
 [[routes]]
 pattern = "fulfillment.brainsait.org/*"
 zone_name = "brainsait.org"
+
+[env.production]
+name = "oid-order-fulfillment"
+
+[env.production.vars]
+AIRTABLE_BASE_ID = "appE7sxyyLHrCQBSe"
+AIRTABLE_TABLE_NAME = "OID_Orders"
+DELIVERY_BASE_URL = "https://assets.brainsait.org"
+
+[[env.production.routes]]
+pattern = "fulfillment.brainsait.org/*"
+zone_name = "brainsait.org"

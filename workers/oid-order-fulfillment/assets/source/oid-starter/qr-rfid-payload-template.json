@@ -1,0 +1,37 @@
+{
+  "$schema": "https://brainsait.com/schemas/qr-rfid/v1",
+  "description": "BrainSAIT OID QR/RFID Payload Templates — IANA PEN 61026",
+  "templates": {
+    "iot_device": {
+      "oid": "1.3.6.1.4.1.61026.4.3",
+      "pen": 61026,
+      "v": 1,
+      "ts": "REPLACE_WITH_ISO8601_TIMESTAMP",
+      "asset": "REPLACE_WITH_ASSET_ID",
+      "loc": "REPLACE_WITH_LOCATION_CODE",
+      "type": "device"
+    },
+    "healthcare_asset": {
+      "oid": "1.3.6.1.4.1.61026.3.1",
+      "pen": 61026,
+      "v": 1,
+      "ts": "REPLACE_WITH_ISO8601_TIMESTAMP",
+      "asset": "REPLACE_WITH_PATIENT_OR_EQUIPMENT_ID",
+      "facility": "REPLACE_WITH_FACILITY_CODE",
+      "type": "healthcare"
+    },
+    "license_badge": {
+      "oid": "1.3.6.1.4.1.61026.2.2",
+      "pen": 61026,
+      "v": 1,
+      "ts": "REPLACE_WITH_ISO8601_TIMESTAMP",
+      "license": "REPLACE_WITH_LICENSE_KEY",
+      "holder": "REPLACE_WITH_HOLDER_NAME",
+      "type": "license"
+    }
+  },
+  "qr_generation": {
+    "javascript": "import QRCode from 'qrcode';\nconst payload = JSON.stringify({ oid: '1.3.6.1.4.1.61026.4.3', pen: 61026, v: 1, ts: new Date().toISOString(), asset: 'DEVICE-001' });\nconst qrDataUrl = await QRCode.toDataURL(payload);",
+    "python": "import qrcode, json\nfrom datetime import datetime\npayload = json.dumps({'oid': '1.3.6.1.4.1.61026.4.3', 'pen': 61026, 'v': 1, 'ts': datetime.utcnow().isoformat()})\nqr = qrcode.make(payload)\nqr.save('brainsait-oid.png')"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://brainsait.com/schemas/mcp-config/v1",
+  "description": "BrainSAIT OID MCP Agent Configuration Templates — IANA PEN 61026",
+  "configurations": {
+    "healthcare_ai_agent": {
+      "urn": "urn:oid:1.3.6.1.4.1.61026.3.3",
+      "toolId": "REPLACE_WITH_YOUR_TOOL_ID",
+      "namespace": "1.3.6.1.4.1.61026",
+      "agentVersion": "1.0.0",
+      "capabilities": ["fhir-query", "nphies-integration", "clinical-decision-support"]
+    },
+    "nphies_connector_agent": {
+      "urn": "urn:oid:1.3.6.1.4.1.61026.3.2.3",
+      "toolId": "REPLACE_WITH_YOUR_TOOL_ID",
+      "namespace": "1.3.6.1.4.1.61026",
+      "agentVersion": "1.0.0",
+      "capabilities": ["prior-authorization", "eligibility-check", "claims-submission"]
+    },
+    "custom_agent": {
+      "urn": "urn:oid:1.3.6.1.4.1.61026.5.REPLACE_WITH_NODE",
+      "toolId": "REPLACE_WITH_YOUR_TOOL_ID",
+      "namespace": "1.3.6.1.4.1.61026",
+      "agentVersion": "1.0.0",
+      "capabilities": ["REPLACE_WITH_CAPABILITIES"]
+    }
+  },
+  "mcp_server_config": {
+    "name": "brainsait-oid-REPLACE_WITH_NAME",
+    "version": "1.0.0",
+    "oid": "1.3.6.1.4.1.61026.REPLACE_WITH_NODE",
+    "transport": "stdio",
+    "tools": [
+      {
+        "name": "REPLACE_WITH_TOOL_NAME",
+        "description": "REPLACE_WITH_DESCRIPTION",
+        "oid_annotation": "urn:oid:1.3.6.1.4.1.61026.REPLACE_WITH_NODE"
+      }
+    ]
+  }
+}

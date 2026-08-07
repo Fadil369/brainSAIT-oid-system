@@ -1,0 +1,32 @@
+{
+  "$schema": "https://brainsait.com/schemas/api-headers/v1",
+  "description": "BrainSAIT OID REST API Headers Templates — IANA PEN 61026",
+  "standard_headers": {
+    "X-OID-Namespace": "1.3.6.1.4.1.61026",
+    "X-OID-Node": "REPLACE_WITH_NODE_PATH",
+    "X-IANA-PEN": "61026",
+    "X-BrainSAIT-Version": "2024-11",
+    "Content-Type": "application/fhir+json",
+    "Accept": "application/fhir+json"
+  },
+  "nphies_headers": {
+    "X-OID-Namespace": "1.3.6.1.4.1.61026.3.2",
+    "X-OID-Node": "1.3.6.1.4.1.61026.3.2.3",
+    "X-IANA-PEN": "61026",
+    "X-BrainSAIT-Version": "2024-11",
+    "X-NPHIES-Org": "REPLACE_WITH_NPHIES_ORG_ID",
+    "Content-Type": "application/fhir+json"
+  },
+  "ai_agent_headers": {
+    "X-OID-Namespace": "1.3.6.1.4.1.61026.3",
+    "X-OID-Node": "1.3.6.1.4.1.61026.3.3",
+    "X-IANA-PEN": "61026",
+    "X-BrainSAIT-Version": "2024-11",
+    "X-Agent-ID": "REPLACE_WITH_AGENT_ID"
+  },
+  "usage_example": {
+    "javascript": "const response = await fetch(url, { headers: { 'X-OID-Namespace': '1.3.6.1.4.1.61026', 'X-IANA-PEN': '61026', 'X-BrainSAIT-Version': '2024-11' } });",
+    "python": "import requests\nresponse = requests.get(url, headers={'X-OID-Namespace': '1.3.6.1.4.1.61026', 'X-IANA-PEN': '61026'})",
+    "curl": "curl -H 'X-OID-Namespace: 1.3.6.1.4.1.61026' -H 'X-IANA-PEN: 61026' https://api.example.com/resource"
+  }
+}

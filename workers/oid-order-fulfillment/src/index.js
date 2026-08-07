@@ -3,21 +3,12 @@
  *
  * Receives Shopify orders/paid webhooks, generates license keys,
  * calls the brainsait-store-delivery admin API, and logs to Airtable.
- *
- * Bindings required (wrangler.toml):
- *   SHOPIFY_WEBHOOK_SECRET  — secret for HMAC-SHA256 verification
- *   DELIVERY_ADMIN_TOKEN    — x-hub-key for brainsait-store-delivery
- *   AIRTABLE_API_KEY        — Airtable personal access token
- *   AIRTABLE_BASE_ID        — appE7sxyyLHrCQBSe
- *   AIRTABLE_TABLE_NAME     — OID_Orders
  */
 
 const DELIVERY_BASE_URL = "https://assets.brainsait.org";
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
 
-// SKU → asset manifest mapping
 const SKU_ASSETS = {
-  // Original 5 tiers
   "OID-STARTER-001": {
     name: "OID Namespace Starter Kit",
     maxDownloads: 5,
@@ -66,7 +57,6 @@ const SKU_ASSETS = {
       { id: "oid-badge-docs", r2_key: "products/oid-badge/badge-system-docs.pdf", filename: "Badge_System_Docs.pdf", kind: "pdf", size: 0 },
     ],
   },
-  // Premium tiers
   "OID-ENT-ARCH-001": {
     name: "OID Enterprise Namespace Architect",
     maxDownloads: 25,
@@ -199,7 +189,6 @@ async function handleOrderPaid(request, env) {
   const customerId = String(order.customer?.id || orderId);
   const customerName = [order.customer?.first_name, order.customer?.last_name].filter(Boolean).join(" ") || customerEmail;
 
-  // Detect preferred language from customer locale or note attributes
   const locale = (order.customer_locale || order.locale || "en").toLowerCase();
   const language = locale.startsWith("ar") ? "AR" : "EN";
 

@@ -1,0 +1,73 @@
+{
+  "resourceType": "Bundle",
+  "id": "brainsait-oid-namespace-bundle",
+  "meta": { "lastUpdated": "2026-01-01T00:00:00Z" },
+  "type": "collection",
+  "entry": [
+    {
+      "fullUrl": "https://brainsait.com/fhir/CodeSystem/brainsait-oid",
+      "resource": {
+        "resourceType": "CodeSystem",
+        "id": "brainsait-oid-codesystem",
+        "url": "urn:oid:1.3.6.1.4.1.61026",
+        "version": "1.0.0",
+        "name": "BrainSAITOIDCodeSystem",
+        "title": "BrainSAIT OID Namespace Code System",
+        "status": "active",
+        "content": "fragment",
+        "publisher": "BrainSAIT",
+        "concept": [
+          { "code": "3.2.3", "display": "NPHIES Connector Service" },
+          { "code": "3.3", "display": "Healthcare AI Agent Framework" },
+          { "code": "2.2", "display": "Licensing & Compliance" }
+        ]
+      }
+    },
+    {
+      "fullUrl": "https://brainsait.com/fhir/ValueSet/brainsait-oid-healthcare",
+      "resource": {
+        "resourceType": "ValueSet",
+        "id": "brainsait-oid-healthcare-valueset",
+        "url": "https://brainsait.com/fhir/ValueSet/brainsait-oid-healthcare",
+        "version": "1.0.0",
+        "name": "BrainSAITOIDHealthcareValueSet",
+        "status": "active",
+        "compose": {
+          "include": [{
+            "system": "urn:oid:1.3.6.1.4.1.61026",
+            "concept": [
+              { "code": "3.2.3", "display": "NPHIES Connector Service" },
+              { "code": "3.3", "display": "Healthcare AI Agent Framework" }
+            ]
+          }]
+        }
+      }
+    },
+    {
+      "fullUrl": "https://brainsait.com/fhir/StructureDefinition/brainsait-nphies-organization",
+      "resource": {
+        "resourceType": "StructureDefinition",
+        "id": "brainsait-nphies-organization",
+        "url": "https://brainsait.com/fhir/StructureDefinition/brainsait-nphies-organization",
+        "version": "1.0.0",
+        "name": "BrainSAITNPHIESOrganization",
+        "status": "active",
+        "fhirVersion": "4.0.1",
+        "kind": "resource",
+        "abstract": false,
+        "type": "Organization",
+        "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Organization",
+        "derivation": "constraint",
+        "differential": {
+          "element": [
+            {
+              "id": "Organization.identifier:brainsait-oid.system",
+              "path": "Organization.identifier.system",
+              "fixedUri": "urn:oid:1.3.6.1.4.1.61026.3.2.3"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
