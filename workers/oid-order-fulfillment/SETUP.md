@@ -2,7 +2,7 @@
 
 ## What This Does
 
-Receives `orders/paid` Shopify webhooks, generates a license key per line item, calls the `brainsait-store-delivery` admin API to grant the license, and logs the order to Airtable (`OID_Orders` table in `appE7sxyyLHrCQBSe`).
+Receives `orders/paid` Shopify webhooks, generates a deterministic license key per purchased unit, calls the `brainsait-store-delivery` admin API to grant the license, and upserts the order in Airtable (`OID_Orders` table in `appE7sxyyLHrCQBSe`). Shopify retries therefore reuse the same license instead of minting duplicates.
 
 ## Architecture
 
@@ -23,14 +23,27 @@ Shopify (orders/paid) ──POST──▶ oid-order-fulfillment
 
 ```bash
 wrangler secret put SHOPIFY_WEBHOOK_SECRET
+wrangler secret put LICENSE_SIGNING_SECRET
 wrangler secret put DELIVERY_ADMIN_TOKEN
 wrangler secret put AIRTABLE_API_KEY
 ```
+
+The GitHub `production` environment must contain:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `SHOPIFY_WEBHOOK_SECRET`
+- `LICENSE_SIGNING_SECRET`
+- `DELIVERY_ADMIN_TOKEN`
+- `AIRTABLE_API_KEY`
+
+Protect the environment with required reviewers. The deployment workflow accepts production pushes and manual dispatches only from `main`.
 
 ## Deploy
 
 ```bash
 npm install
+npm test
 npm run deploy
 ```
 
@@ -40,6 +53,8 @@ In Shopify Admin → Settings → Notifications → Webhooks:
 - Event: `Order payment`
 - Format: `JSON`
 - URL: `https://fulfillment.brainsait.org/webhooks/shopify/orders-paid`
+
+Health endpoint: `GET https://fulfillment.brainsait.org/health`
 
 ## Airtable Table
 
