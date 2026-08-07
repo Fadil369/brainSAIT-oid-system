@@ -65,10 +65,13 @@ jobs:
     environment: production
     if: >-
       ${{
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_dispatch' &&
-         github.ref == 'refs/heads/main' &&
-         github.event.inputs.deploy_worker != 'false')
+        vars.PRODUCTION_DEPLOY_ENABLED == 'true' &&
+        (
+          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_dispatch' &&
+           github.ref == 'refs/heads/main' &&
+           github.event.inputs.deploy_worker != 'false')
+        )
       }}
 
     steps:
@@ -127,10 +130,13 @@ jobs:
     environment: production
     if: >-
       ${{
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_dispatch' &&
-         github.ref == 'refs/heads/main' &&
-         github.event.inputs.upload_assets != 'false')
+        vars.PRODUCTION_DEPLOY_ENABLED == 'true' &&
+        (
+          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_dispatch' &&
+           github.ref == 'refs/heads/main' &&
+           github.event.inputs.upload_assets != 'false')
+        )
       }}
     needs: validate-worker
 
