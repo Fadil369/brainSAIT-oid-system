@@ -28,9 +28,7 @@ function buildOidTree(badges) {
 
   for (const badge of badges) {
     const fullOid = badge.full_oid || `${ROOT_OID}.${badge.oid}`;
-    const parts = fullOid.split('.').filter(Boolean);
-
-    if (!fullOid.startsWith(ROOT_OID)) {
+    if (!(fullOid === ROOT_OID || fullOid.startsWith(`${ROOT_OID}.`))) {
       continue;
     }
 
