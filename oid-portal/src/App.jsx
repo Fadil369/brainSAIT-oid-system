@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from './lib/router';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import RegisterBadge from './pages/RegisterBadge';

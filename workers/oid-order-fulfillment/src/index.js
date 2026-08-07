@@ -5,7 +5,6 @@
  * calls the brainsait-store-delivery admin API, and logs to Airtable.
  */
 
-const DELIVERY_BASE_URL = "https://assets.brainsait.org";
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
 
 const SKU_ASSETS = {
@@ -14,7 +13,7 @@ const SKU_ASSETS = {
     maxDownloads: 5,
     expiresInDays: 365,
     assets: [
-      { id: "oid-starter-guide", r2_key: "products/oid-starter/oid-namespace-starter-guide.pdf", filename: "OID_Namespace_Starter_Guide.pdf", kind: "pdf", size: 0 },
+      { id: "oid-starter-guide", r2_key: "products/oid-starter/oid-namespace-starter-guide.html", filename: "OID_Namespace_Starter_Guide.html", kind: "html", size: 0 },
       { id: "oid-starter-templates", r2_key: "products/oid-starter/oid-templates.zip", filename: "OID_Templates.zip", kind: "zip", size: 0 },
     ],
   },
@@ -24,7 +23,7 @@ const SKU_ASSETS = {
     expiresInDays: 365,
     assets: [
       { id: "oid-dev-sdk", r2_key: "products/oid-developer/oid-sdk.zip", filename: "OID_Developer_SDK.zip", kind: "zip", size: 0 },
-      { id: "oid-dev-docs", r2_key: "products/oid-developer/oid-developer-docs.pdf", filename: "OID_Developer_Docs.pdf", kind: "pdf", size: 0 },
+      { id: "oid-dev-docs", r2_key: "products/oid-developer/oid-developer-docs.html", filename: "OID_Developer_Docs.html", kind: "html", size: 0 },
       { id: "oid-dev-examples", r2_key: "products/oid-developer/oid-code-examples.zip", filename: "OID_Code_Examples.zip", kind: "zip", size: 0 },
     ],
   },
@@ -34,7 +33,7 @@ const SKU_ASSETS = {
     expiresInDays: 365,
     assets: [
       { id: "oid-fhir-bundle", r2_key: "products/oid-healthcare/fhir-namespace-bundle.zip", filename: "FHIR_Namespace_Bundle.zip", kind: "zip", size: 0 },
-      { id: "oid-dicom-guide", r2_key: "products/oid-healthcare/dicom-uid-guide.pdf", filename: "DICOM_UID_Guide.pdf", kind: "pdf", size: 0 },
+      { id: "oid-dicom-guide", r2_key: "products/oid-healthcare/dicom-uid-guide.html", filename: "DICOM_UID_Guide.html", kind: "html", size: 0 },
       { id: "oid-hl7-templates", r2_key: "products/oid-healthcare/hl7-templates.zip", filename: "HL7_Templates.zip", kind: "zip", size: 0 },
     ],
   },
@@ -44,7 +43,7 @@ const SKU_ASSETS = {
     expiresInDays: 365,
     assets: [
       { id: "oid-ent-platform", r2_key: "products/oid-enterprise/enterprise-platform.zip", filename: "OID_Enterprise_Platform.zip", kind: "zip", size: 0 },
-      { id: "oid-ent-docs", r2_key: "products/oid-enterprise/enterprise-docs.pdf", filename: "Enterprise_Documentation.pdf", kind: "pdf", size: 0 },
+      { id: "oid-ent-docs", r2_key: "products/oid-enterprise/enterprise-docs.html", filename: "Enterprise_Documentation.html", kind: "html", size: 0 },
       { id: "oid-ent-config", r2_key: "products/oid-enterprise/enterprise-config-templates.zip", filename: "Enterprise_Config_Templates.zip", kind: "zip", size: 0 },
     ],
   },
@@ -54,7 +53,7 @@ const SKU_ASSETS = {
     expiresInDays: 730,
     assets: [
       { id: "oid-badge-source", r2_key: "products/oid-badge/badge-system-source.zip", filename: "OID_Badge_System_Source.zip", kind: "zip", size: 0 },
-      { id: "oid-badge-docs", r2_key: "products/oid-badge/badge-system-docs.pdf", filename: "Badge_System_Docs.pdf", kind: "pdf", size: 0 },
+      { id: "oid-badge-docs", r2_key: "products/oid-badge/badge-system-docs.html", filename: "Badge_System_Docs.html", kind: "html", size: 0 },
     ],
   },
   "OID-ENT-ARCH-001": {
@@ -65,9 +64,9 @@ const SKU_ASSETS = {
       { id: "oid-arch-namespace-kit", r2_key: "products/oid-ent-arch/namespace-architect-kit.zip", filename: "OID_Enterprise_Namespace_Architect.zip", kind: "zip", size: 0 },
       { id: "oid-arch-fhir-bundle", r2_key: "products/oid-ent-arch/fhir-namespace-bundle-r4-r5.zip", filename: "FHIR_Namespace_Bundle_R4_R5.zip", kind: "zip", size: 0 },
       { id: "oid-arch-mcp-schemas", r2_key: "products/oid-ent-arch/mcp-urn-schemas.zip", filename: "MCP_URN_Schemas.zip", kind: "zip", size: 0 },
-      { id: "oid-arch-x509-policy", r2_key: "products/oid-ent-arch/x509-policy-oids.pdf", filename: "X509_Policy_OIDs.pdf", kind: "pdf", size: 0 },
-      { id: "oid-arch-docs", r2_key: "products/oid-ent-arch/enterprise-architect-docs.pdf", filename: "Enterprise_Architect_Docs.pdf", kind: "pdf", size: 0 },
-      { id: "oid-arch-portal-access", r2_key: "products/oid-ent-arch/portal-access-guide.pdf", filename: "Portal_Access_Guide.pdf", kind: "pdf", size: 0 },
+      { id: "oid-arch-x509-policy", r2_key: "products/oid-ent-arch/x509-policy-oids.conf", filename: "X509_Policy_OIDs.conf", kind: "config", size: 0 },
+      { id: "oid-arch-docs", r2_key: "products/oid-ent-arch/enterprise-architect-docs.html", filename: "Enterprise_Architect_Docs.html", kind: "html", size: 0 },
+      { id: "oid-arch-portal-access", r2_key: "products/oid-ent-arch/portal-access-guide.html", filename: "Portal_Access_Guide.html", kind: "html", size: 0 },
     ],
   },
   "OID-HLTH-SUITE-001": {
@@ -76,10 +75,10 @@ const SKU_ASSETS = {
     expiresInDays: 365,
     assets: [
       { id: "hlth-full-kit", r2_key: "products/oid-hlth-suite/healthcare-ai-identity-suite.zip", filename: "Healthcare_AI_Identity_Suite.zip", kind: "zip", size: 0 },
-      { id: "hlth-dicom-uid-block", r2_key: "products/oid-hlth-suite/dicom-uid-allocation-block.pdf", filename: "DICOM_UID_Allocation_Block.pdf", kind: "pdf", size: 0 },
+      { id: "hlth-dicom-uid-block", r2_key: "products/oid-hlth-suite/dicom-uid-allocation-block.html", filename: "DICOM_UID_Allocation_Block.html", kind: "html", size: 0 },
       { id: "hlth-fhir-ext-registry", r2_key: "products/oid-hlth-suite/fhir-extension-registry.zip", filename: "FHIR_Extension_Registry.zip", kind: "zip", size: 0 },
-      { id: "hlth-snomed-mapping", r2_key: "products/oid-hlth-suite/snomed-ct-oid-mapping.pdf", filename: "SNOMED_CT_OID_Mapping.pdf", kind: "pdf", size: 0 },
-      { id: "hlth-hipaa-docs", r2_key: "products/oid-hlth-suite/hipaa-namespace-documentation.pdf", filename: "HIPAA_Namespace_Documentation.pdf", kind: "pdf", size: 0 },
+      { id: "hlth-snomed-mapping", r2_key: "products/oid-hlth-suite/snomed-ct-oid-mapping.json", filename: "SNOMED_CT_OID_Mapping.json", kind: "json", size: 0 },
+      { id: "hlth-hipaa-docs", r2_key: "products/oid-hlth-suite/hipaa-namespace-documentation.html", filename: "HIPAA_Namespace_Documentation.html", kind: "html", size: 0 },
       { id: "hlth-audit-schema", r2_key: "products/oid-hlth-suite/audit-trail-oid-schema.zip", filename: "Audit_Trail_OID_Schema.zip", kind: "zip", size: 0 },
     ],
   },
@@ -90,8 +89,8 @@ const SKU_ASSETS = {
     assets: [
       { id: "wl-full-platform", r2_key: "products/oid-white-label/white-label-enterprise-package.zip", filename: "WhiteLabel_Enterprise_Package.zip", kind: "zip", size: 0 },
       { id: "wl-portal-source", r2_key: "products/oid-white-label/oid-portal-react-source.zip", filename: "OID_Portal_React_Source.zip", kind: "zip", size: 0 },
-      { id: "wl-reseller-guide", r2_key: "products/oid-white-label/reseller-setup-guide.pdf", filename: "Reseller_Setup_Guide.pdf", kind: "pdf", size: 0 },
-      { id: "wl-multitenant-docs", r2_key: "products/oid-white-label/multitenant-architecture-docs.pdf", filename: "Multitenant_Architecture_Docs.pdf", kind: "pdf", size: 0 },
+      { id: "wl-reseller-guide", r2_key: "products/oid-white-label/reseller-setup-guide.html", filename: "Reseller_Setup_Guide.html", kind: "html", size: 0 },
+      { id: "wl-multitenant-docs", r2_key: "products/oid-white-label/multitenant-architecture-docs.html", filename: "Multitenant_Architecture_Docs.html", kind: "html", size: 0 },
       { id: "wl-brand-kit", r2_key: "products/oid-white-label/white-label-brand-kit.zip", filename: "WhiteLabel_Brand_Kit.zip", kind: "zip", size: 0 },
     ],
   },
@@ -104,17 +103,29 @@ const SKU_ASSETS = {
       { id: "fhir-plat-ig-template", r2_key: "products/oid-fhir-platform/ig-template-with-oid.zip", filename: "IG_Template_with_OID.zip", kind: "zip", size: 0 },
       { id: "fhir-plat-fsh-library", r2_key: "products/oid-fhir-platform/fsh-template-library.zip", filename: "FSH_Template_Library.zip", kind: "zip", size: 0 },
       { id: "fhir-plat-migration", r2_key: "products/oid-fhir-platform/structuredefinition-oid-migration.zip", filename: "StructureDefinition_OID_Migration.zip", kind: "zip", size: 0 },
-      { id: "fhir-plat-docs", r2_key: "products/oid-fhir-platform/fhir-platform-docs.pdf", filename: "FHIR_Platform_Docs.pdf", kind: "pdf", size: 0 },
+      { id: "fhir-plat-docs", r2_key: "products/oid-fhir-platform/fhir-platform-docs.html", filename: "FHIR_Platform_Docs.html", kind: "html", size: 0 },
     ],
   },
 };
 
-function generateLicenseKey(sku) {
+async function generateLicenseKey(secret, orderId, lineItemId, unit, sku) {
   const prefix = sku.replace(/[^A-Z0-9]/g, "").slice(0, 8);
-  const ts = Date.now().toString(36).toUpperCase();
-  const bytes = crypto.getRandomValues(new Uint8Array(8));
-  const rand = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
-  return `BSOID-${prefix}-${ts}-${rand}`;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(`${orderId}:${lineItemId}:${unit}:${sku}`)
+  );
+  const digest = Array.from(new Uint8Array(signature).slice(0, 12), (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("").toUpperCase();
+  return `BSOID-${prefix}-${digest}`;
 }
 
 async function verifyShopifyHmac(request, secret) {
@@ -127,15 +138,19 @@ async function verifyShopifyHmac(request, secret) {
     new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["verify"]
   );
-  const sig = await crypto.subtle.sign("HMAC", key, body);
-  const computed = btoa(String.fromCharCode(...new Uint8Array(sig)));
-  return computed === hmacHeader;
+  let supplied;
+  try {
+    supplied = Uint8Array.from(atob(hmacHeader), (char) => char.charCodeAt(0));
+  } catch {
+    return false;
+  }
+  return crypto.subtle.verify("HMAC", key, supplied, body);
 }
 
 async function grantLicense(env, licenseKey, orderId, productIds, assets, customerEmail, customerId, maxDownloads, expiresAt) {
-  const resp = await fetch(`${DELIVERY_BASE_URL}/admin/licenses`, {
+  const resp = await fetch(`${env.DELIVERY_BASE_URL}/admin/licenses`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -152,11 +167,10 @@ async function grantLicense(env, licenseKey, orderId, productIds, assets, custom
       expires_at: expiresAt,
     }),
   });
-  if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error(`delivery grant failed ${resp.status}: ${txt}`);
+  if (!resp.ok && resp.status !== 409) {
+    throw new Error(`delivery:${resp.status}`);
   }
-  return resp.json();
+  return resp.status === 409 ? { ok: true, replay: true } : resp.json();
 }
 
 async function logToAirtable(env, record) {
@@ -168,17 +182,28 @@ async function logToAirtable(env, record) {
         Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ fields: record }),
+      body: JSON.stringify({
+        performUpsert: { fieldsToMergeOn: ["License Key"] },
+        records: [{ fields: record }],
+      }),
     }
   );
   if (!resp.ok) {
-    const txt = await resp.text();
-    throw new Error(`airtable log failed ${resp.status}: ${txt}`);
+    throw new Error(`airtable:${resp.status}`);
   }
   return resp.json();
 }
 
 async function handleOrderPaid(request, env) {
+  if (
+    !env.SHOPIFY_WEBHOOK_SECRET
+    || !env.LICENSE_SIGNING_SECRET
+    || !env.DELIVERY_ADMIN_TOKEN
+    || !env.AIRTABLE_API_KEY
+  ) {
+    return new Response("Service configuration error", { status: 503 });
+  }
+
   const valid = await verifyShopifyHmac(request, env.SHOPIFY_WEBHOOK_SECRET);
   if (!valid) {
     return new Response("Unauthorized", { status: 401 });
@@ -194,77 +219,116 @@ async function handleOrderPaid(request, env) {
   const language = locale.startsWith("ar") ? "AR" : "EN";
 
   const errors = [];
+  const fulfilled = [];
+  const unsupported = [];
+  let ignored = 0;
+  const issuedAtDate = new Date(order.processed_at || order.created_at || Date.now());
+  const issuedAt = Number.isNaN(issuedAtDate.getTime())
+    ? new Date().toISOString()
+    : issuedAtDate.toISOString();
 
-  for (const lineItem of order.line_items || []) {
+  for (const [lineIndex, lineItem] of (order.line_items || []).entries()) {
     const sku = lineItem.sku;
-    if (!sku || !SKU_ASSETS[sku]) continue;
+    if (!sku || !sku.startsWith("OID-")) {
+      ignored += 1;
+      continue;
+    }
+    if (!SKU_ASSETS[sku]) {
+      unsupported.push({ lineItemId: String(lineItem.id || lineIndex), sku: sku || null });
+      continue;
+    }
 
     const manifest = SKU_ASSETS[sku];
-    const licenseKey = generateLicenseKey(sku);
-    const expiresAt = new Date(Date.now() + manifest.expiresInDays * 86400 * 1000).toISOString();
-    const deliveryUrl = `${DELIVERY_BASE_URL}/deliver/${licenseKey}`;
+    const quantity = Math.max(1, Number.parseInt(lineItem.quantity, 10) || 1);
+    const lineItemId = String(lineItem.id || `${sku}-${lineIndex}`);
 
-    try {
-      await grantLicense(
-        env,
-        licenseKey,
+    for (let unit = 1; unit <= quantity; unit += 1) {
+      const licenseKey = await generateLicenseKey(
+        env.LICENSE_SIGNING_SECRET,
         orderId,
-        [sku],
-        manifest.assets,
-        customerEmail,
-        customerId,
-        manifest.maxDownloads,
-        expiresAt
+        lineItemId,
+        unit,
+        sku
       );
+      const expiresAt = new Date(
+        new Date(issuedAt).getTime() + manifest.expiresInDays * 86400 * 1000
+      ).toISOString();
+      const deliveryUrl = `${env.DELIVERY_BASE_URL}/deliver/${licenseKey}`;
 
-      await logToAirtable(env, {
-        "License Key": licenseKey,
-        "Shopify Order ID": orderId,
-        "Customer Email": customerEmail,
-        "Customer Name": customerName,
-        "Product SKU": sku,
-        "Product Name": manifest.name,
-        "Amount SAR": Number(lineItem.price),
-        "Status": "Active",
-        "Language": language,
-        "Asset Bundle": manifest.assets.map((a) => a.id).join(", "),
-        "Download URL": deliveryUrl,
-        "Issued At": new Date().toISOString(),
-        "Expires At": expiresAt.slice(0, 10),
-        "Download Count": 0,
-        "Notes": `Order ${orderId} — ${lineItem.quantity}x ${lineItem.name}`,
-      });
-    } catch (err) {
-      errors.push({ sku, error: err.message });
+      try {
+        await grantLicense(
+          env,
+          licenseKey,
+          orderId,
+          [sku],
+          manifest.assets,
+          customerEmail,
+          customerId,
+          manifest.maxDownloads,
+          expiresAt
+        );
+
+        await logToAirtable(env, {
+          "License Key": licenseKey,
+          "Shopify Order ID": orderId,
+          "Customer Email": customerEmail,
+          "Customer Name": customerName,
+          "Product SKU": sku,
+          "Product Name": manifest.name,
+          "Amount SAR": Number(lineItem.price),
+          "Status": "Active",
+          "Language": language,
+          "Asset Bundle": manifest.assets.map((asset) => asset.id).join(", "),
+          "Download URL": deliveryUrl,
+          "Issued At": issuedAt,
+          "Expires At": expiresAt.slice(0, 10),
+          "Download Count": 0,
+          "Notes": `Order ${orderId} - unit ${unit} of ${quantity} - ${lineItem.name}`,
+        });
+        fulfilled.push({ sku, unit, licenseKey });
+      } catch (error) {
+        errors.push({ sku, unit, code: error.message });
+      }
     }
   }
 
-  if (errors.length > 0) {
-    console.error("fulfillment errors", JSON.stringify(errors));
-    return new Response(JSON.stringify({ ok: false, errors }), {
-      status: 207,
+  if (unsupported.length > 0) {
+    console.error("unsupported Shopify SKUs", JSON.stringify({ orderId, unsupported }));
+    return new Response(JSON.stringify({ ok: false, retryable: true }), {
+      status: 500,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
+  if (errors.length > 0) {
+    console.error("fulfillment errors", JSON.stringify({ orderId, errors }));
+    return new Response(JSON.stringify({ ok: false, retryable: true }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  return new Response(JSON.stringify({
+    ok: true,
+    fulfilled: fulfilled.length,
+    ignored,
+  }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
 }
 
-async function handleAdminStatus(request, env) {
-  const authHeader = request.headers.get("x-hub-key");
-  if (authHeader !== env.DELIVERY_ADMIN_TOKEN) {
-    return new Response("Forbidden", { status: 403 });
-  }
+function handleHealth(env) {
   return new Response(
     JSON.stringify({
       worker: "oid-order-fulfillment",
-      version: "1.0.0",
-      skus: Object.keys(SKU_ASSETS),
-      delivery_base: DELIVERY_BASE_URL,
-      airtable_base: env.AIRTABLE_BASE_ID,
+      status: "ok",
+      configured: Boolean(
+        env.SHOPIFY_WEBHOOK_SECRET
+        && env.LICENSE_SIGNING_SECRET
+        && env.DELIVERY_ADMIN_TOKEN
+        && env.AIRTABLE_API_KEY
+      ),
       timestamp: new Date().toISOString(),
     }),
     { headers: { "Content-Type": "application/json" } }
@@ -279,8 +343,8 @@ export default {
       return handleOrderPaid(request, env);
     }
 
-    if (request.method === "GET" && url.pathname === "/admin/status") {
-      return handleAdminStatus(request, env);
+    if (request.method === "GET" && url.pathname === "/health") {
+      return handleHealth(env);
     }
 
     return new Response("Not Found", { status: 404 });

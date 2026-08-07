@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '../lib/router';
 
 const OidTree = () => {
   const [treeData, setTreeData] = useState(null);
