@@ -120,10 +120,10 @@ const SKU_ASSETS = {
 // underlying asset manifest (e.g. the live Shopify catalog sells "BSP-OID-*" SKUs while this
 // manifest was originally keyed by the internal "OID-*-001" naming). Alias them here instead of
 // duplicating manifests, so a rename on either side only needs one line changed.
-SKU_ASSETS["BSP-OID-INTEGRATION-BLUEPRINT"] = SKU_ASSETS["OID-STARTER-001"];
-SKU_ASSETS["BSP-OID-REGISTRY-PLATFORM"] = SKU_ASSETS["OID-DEV-001"];
-SKU_ASSETS["BSP-OID-NPHIES-BUNDLE"] = SKU_ASSETS["OID-HLTH-001"];
-SKU_ASSETS["BSP-OID-ENTERPRISE-BADGE"] = SKU_ASSETS["OID-BADGE-001"];
+SKU_ASSETS["BSP-OID-INTEGRATION-BLUEPRINT"] = { ...SKU_ASSETS["OID-STARTER-001"], assets: [...SKU_ASSETS["OID-STARTER-001"].assets] };
+SKU_ASSETS["BSP-OID-REGISTRY-PLATFORM"] = { ...SKU_ASSETS["OID-DEV-001"], assets: [...SKU_ASSETS["OID-DEV-001"].assets] };
+SKU_ASSETS["BSP-OID-NPHIES-BUNDLE"] = { ...SKU_ASSETS["OID-HLTH-001"], assets: [...SKU_ASSETS["OID-HLTH-001"].assets] };
+SKU_ASSETS["BSP-OID-ENTERPRISE-BADGE"] = { ...SKU_ASSETS["OID-BADGE-001"], assets: [...SKU_ASSETS["OID-BADGE-001"].assets] };
 
 async function generateLicenseKey(secret, orderId, lineItemId, unit, sku) {
   const prefix = sku.replace(/[^A-Z0-9]/g, "").slice(0, 8);
