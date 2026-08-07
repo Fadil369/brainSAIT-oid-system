@@ -140,9 +140,9 @@ jobs:
 
       - name: Validate upload secret
         env:
-          ADMIN_TOKEN: ${{ secrets.DELIVERY_ADMIN_TOKEN }}
+          DELIVERY_ADMIN_TOKEN: ${{ secrets.DELIVERY_ADMIN_TOKEN }}
         run: |
-          test -n "$ADMIN_TOKEN" || { echo "::error::DELIVERY_ADMIN_TOKEN is not configured"; exit 1; }
+          test -n "$DELIVERY_ADMIN_TOKEN" || { echo "::error::DELIVERY_ADMIN_TOKEN is not configured"; exit 1; }
 
       - name: Install zip utility
         run: sudo apt-get install -y zip
