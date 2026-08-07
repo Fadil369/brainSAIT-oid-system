@@ -39,6 +39,10 @@ The GitHub `production` environment must contain:
 
 Protect the environment with required reviewers. The deployment workflow accepts production pushes and manual dispatches only from `main`.
 
+Set the repository variable `PRODUCTION_DEPLOY_ENABLED=true` only after all
+production environment secrets are configured. Keep it `false` when
+deployments are performed directly from protected infrastructure.
+
 ## Deploy
 
 ```bash
