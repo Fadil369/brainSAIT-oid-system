@@ -19,6 +19,9 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: read
+
 env:
   WORKER_DIR: workers/oid-order-fulfillment
   ASSETS_DIR: workers/oid-order-fulfillment/assets/source
