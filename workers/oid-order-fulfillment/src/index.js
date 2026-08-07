@@ -112,8 +112,10 @@ const SKU_ASSETS = {
 function generateLicenseKey(orderId, sku) {
   const prefix = sku.replace(/[^A-Z0-9]/g, "").slice(0, 8);
   const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `BSOID-${prefix}-${ts}-${rand}`;
+  const orderPart = String(orderId).slice(-6);
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  const rand = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+  return `BSOID-${prefix}${orderPart}-${ts}-${rand}`;
 }
 
 async function verifyShopifyHmac(request, secret) {
