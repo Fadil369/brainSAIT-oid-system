@@ -218,7 +218,7 @@ To learn more about a specific aspect of the system, could you provide more deta
       <div className="mt-2 p-2 bg-darker-bg rounded-md flex items-center">
         <div className="p-2 rounded-md bg-content-bg mr-2">
           {isImage ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor" loading="lazy">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
             </svg>
           ) : (
