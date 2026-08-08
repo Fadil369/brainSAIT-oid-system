@@ -5,7 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 AIRTABLE_BASE_ID = "appE7sxyyLHrCQBSe"
-AIRTABLE_TABLE_NAME = "OID_Orders"
+AIRTABLE_TABLE_NAME = "tblhmaM8zV3aibbUO"
 DELIVERY_BASE_URL = "https://assets.brainsait.org"
 RESEND_FROM_EMAIL = "BrainSAIT <orders@brainsait.org>"
 
@@ -26,7 +26,7 @@ name = "oid-order-fulfillment"
 
 [env.production.vars]
 AIRTABLE_BASE_ID = "appE7sxyyLHrCQBSe"
-AIRTABLE_TABLE_NAME = "OID_Orders"
+AIRTABLE_TABLE_NAME = "tblhmaM8zV3aibbUO"
 DELIVERY_BASE_URL = "https://assets.brainsait.org"
 RESEND_FROM_EMAIL = "BrainSAIT <orders@brainsait.org>"
 

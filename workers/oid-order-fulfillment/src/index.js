@@ -304,10 +304,15 @@ async function notifyHubEvents(env, { customerEmail, items, currency = "SAR" }) 
 }
 
 async function logToAirtable(env, record) {
+  // PATCH + performUpsert (NOT POST): PATCH upsert is accepted by this
+  // workspace's PAT while plain POST with performUpsert returns
+  // INVALID_REQUEST_UNKNOWN. Shopify webhooks retry on non-2xx and
+  // re-issue the same deterministic License Key, so upsert-by-License-Key
+  // keeps this idempotent across retries.
   const resp = await fetch(
     `${AIRTABLE_API_URL}/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(env.AIRTABLE_TABLE_NAME)}`,
     {
-      method: "POST",
+      method: "PATCH",
       headers: {
         Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
         "Content-Type": "application/json",
