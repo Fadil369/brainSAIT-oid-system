@@ -7,6 +7,28 @@
 
 const AIRTABLE_API_URL = "https://api.airtable.com/v0";
 
+const FETCH_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[char]);
+}
+
 const SKU_ASSETS = {
   "OID-STARTER-001": {
     name: "OID Namespace Starter Kit",
@@ -159,7 +181,7 @@ async function verifyShopifyHmac(request, secret) {
 }
 
 async function grantLicense(env, licenseKey, orderId, productIds, assets, customerEmail, customerId, maxDownloads, expiresAt) {
-  const resp = await fetch(`${env.DELIVERY_BASE_URL}/admin/licenses`, {
+  const resp = await fetchWithTimeout(`${env.DELIVERY_BASE_URL}/admin/licenses`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -183,6 +205,17 @@ async function grantLicense(env, licenseKey, orderId, productIds, assets, custom
 }
 
 const HUB_BASE_URL = "https://hub.brainsait.de";
+const NOTIFY_BASE_URL = "https://notify.brainsait.de";
+
+// BRAINSAIT Identity Cloud — MailOTP SaaS plans sold on store.brainsait.org.
+// These are NOT license-based products: on orders/paid we forward the order to the
+// notify service, which provisions a tenant + emails the customer their API key.
+const MAIL_OTP_SKUS = new Set([
+  "BSP-IDC-DEVELOPER",
+  "BSP-IDC-FOUNDER",
+  "BSP-IDC-BUSINESS",
+  "BSP-IDC-ENTERPRISE",
+]);
 
 function renderDeliveryEmailHtml({ customerName, language, orderId, items }) {
   const isAr = language === "AR";
@@ -190,9 +223,9 @@ function renderDeliveryEmailHtml({ customerName, language, orderId, items }) {
     .map(
       (item) => `
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #eceaf2;font-size:14px;color:#211E1F">${item.productName}</td>
+        <td style="padding:10px 0;border-bottom:1px solid #eceaf2;font-size:14px;color:#211E1F">${escapeHtml(item.productName)}</td>
         <td style="padding:10px 0;border-bottom:1px solid #eceaf2;text-align:right">
-          <a href="${item.deliveryUrl}" style="background:#545EA9;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px">
+          <a href="${escapeHtml(item.deliveryUrl)}" style="background:#545EA9;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px">
             ${isAr ? "تنزيل" : "Download"}
           </a>
         </td>
@@ -201,8 +234,8 @@ function renderDeliveryEmailHtml({ customerName, language, orderId, items }) {
     .join("");
   const heading = isAr ? "طلبك جاهز" : "Your order is ready";
   const greeting = isAr
-    ? `مرحباً ${customerName || ""}، شكراً لشرائك من BrainSAIT.`
-    : `Hi ${customerName || "there"}, thanks for your purchase from BrainSAIT.`;
+    ? `مرحباً ${escapeHtml(customerName)}، شكراً لشرائك من BrainSAIT.`
+    : `Hi ${escapeHtml(customerName || "there")}, thanks for your purchase from BrainSAIT.`;
   const note = isAr
     ? "كل رابط يوصلك لصفحة التنزيلات الخاصة بترخيصك — احتفظ به، فهو نقطة الوصول الدائمة لهذا الطلب."
     : "Each link takes you to your license's download page — keep it, it's your permanent access point for this order.";
@@ -214,7 +247,7 @@ function renderDeliveryEmailHtml({ customerName, language, orderId, items }) {
         <table style="width:100%;border-collapse:collapse">${rows}</table>
         <p style="color:#8a8a93;font-size:12px;margin-top:20px">${note}</p>
         <p style="color:#9a9aa3;font-size:12px;text-align:center;margin-top:24px">
-          Order ${orderId} · <a href="mailto:support@brainsait.com" style="color:#545EA9">support@brainsait.com</a>
+          Order ${escapeHtml(orderId)} · <a href="mailto:support@brainsait.com" style="color:#545EA9">support@brainsait.com</a>
         </p>
       </div>
     </div>
@@ -227,7 +260,7 @@ async function sendDeliveryEmail(env, { customerEmail, customerName, language, o
   }
   const subject =
     language === "AR" ? `طلبك جاهز — ${orderId}` : `Your BrainSAIT order is ready — ${orderId}`;
-  const resp = await fetch("https://api.resend.com/emails", {
+  const resp = await fetchWithTimeout("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
@@ -257,7 +290,7 @@ async function notifyTelegramSale(env, { orderId, customerEmail, items, currency
     lines,
     `Total: ${total} ${currency}`,
   ].join("\n");
-  const resp = await fetch(`${HUB_BASE_URL}/telegram/send`, {
+  const resp = await fetchWithTimeout(`${HUB_BASE_URL}/telegram/send`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -280,7 +313,7 @@ async function notifyHubEvents(env, { customerEmail, items, currency = "SAR" }) 
   if (!env.DELIVERY_ADMIN_TOKEN) return { ok: false, skipped: true };
   const results = await Promise.all(
     items.map((item) =>
-      fetch(`${HUB_BASE_URL}/event/purchase-fulfilled`, {
+      fetchWithTimeout(`${HUB_BASE_URL}/event/purchase-fulfilled`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -303,13 +336,96 @@ async function notifyHubEvents(env, { customerEmail, items, currency = "SAR" }) 
   return { ok: true };
 }
 
+// Forwards an order containing a Mail & OTP plan to the notify service, which
+// provisions a tenant + emails the API key. Idempotent: notify keys on order id.
+async function provisionMailOtp(env, order) {
+  const hasMailOtp = (order.line_items || []).some((li) => MAIL_OTP_SKUS.has(li.sku));
+  if (!hasMailOtp) {
+    return { ok: true, skipped: true };
+  }
+  if (!env.NOTIFY_PROVISION_KEY) {
+    return { ok: false, error: "NOTIFY_PROVISION_KEY not configured" };
+  }
+  const resp = await fetchWithTimeout(`${NOTIFY_BASE_URL}/webhooks/shopify/orders-paid`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Provision-Key": env.NOTIFY_PROVISION_KEY,
+    },
+    body: JSON.stringify(order),
+  });
+  if (!resp.ok) {
+    throw new Error(`notify:${resp.status}`);
+  }
+  return resp.json();
+}
+
+// Shared auth check for the new topic handlers below (products/create,
+// order_transactions/create, orders/fulfilled, fulfillments/create).
+// handleOrderPaid keeps its own inline copy untouched — this worker fulfills
+// real paid orders, so that path is deliberately not refactored here.
+async function verifyShopifyAuth(request, env) {
+  const internalKey = request.headers.get("x-hub-key") || "";
+  const hmacHeader = request.headers.get("X-Shopify-Hmac-SHA256") || "";
+  if (internalKey && env.DELIVERY_ADMIN_TOKEN && internalKey === env.DELIVERY_ADMIN_TOKEN) {
+    return true;
+  }
+  if (hmacHeader && env.SHOPIFY_WEBHOOK_SECRET) {
+    return verifyShopifyHmac(request, env.SHOPIFY_WEBHOOK_SECRET);
+  }
+  return false;
+}
+
+async function notifyTelegramOps(env, text) {
+  if (!env.DELIVERY_ADMIN_TOKEN) return { ok: false, skipped: true };
+  const resp = await fetchWithTimeout(`${HUB_BASE_URL}/telegram/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hub-key": env.DELIVERY_ADMIN_TOKEN,
+    },
+    body: JSON.stringify({ text }),
+  });
+  if (!resp.ok) {
+    throw new Error(`telegram:${resp.status}`);
+  }
+  return { ok: true };
+}
+
+async function listAirtableByOrderId(env, orderId) {
+  const formula = encodeURIComponent(`{Shopify Order ID}='${orderId}'`);
+  const resp = await fetchWithTimeout(
+    `${AIRTABLE_API_URL}/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(env.AIRTABLE_TABLE_NAME)}?filterByFormula=${formula}`,
+    { headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` } }
+  );
+  if (!resp.ok) {
+    throw new Error(`airtable-lookup:${resp.status}`);
+  }
+  const data = await resp.json();
+  return data.records || [];
+}
+
+async function revokeLicense(env, licenseKey) {
+  const resp = await fetchWithTimeout(
+    `${env.DELIVERY_BASE_URL}/admin/licenses/${encodeURIComponent(licenseKey)}/revoke`,
+    {
+      method: "POST",
+      headers: { "x-hub-key": env.DELIVERY_ADMIN_TOKEN },
+    }
+  );
+  if (!resp.ok && resp.status !== 404) {
+    throw new Error(`revoke:${resp.status}`);
+  }
+  return resp.status === 404 ? { ok: true, alreadyGone: true } : resp.json();
+}
+
 async function logToAirtable(env, record) {
   // PATCH + performUpsert (NOT POST): PATCH upsert is accepted by this
   // workspace's PAT while plain POST with performUpsert returns
   // INVALID_REQUEST_UNKNOWN. Shopify webhooks retry on non-2xx and
   // re-issue the same deterministic License Key, so upsert-by-License-Key
   // keeps this idempotent across retries.
-  const resp = await fetch(
+  const resp = await fetchWithTimeout(
     `${AIRTABLE_API_URL}/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(env.AIRTABLE_TABLE_NAME)}`,
     {
       method: "PATCH",
@@ -339,12 +455,46 @@ async function handleOrderPaid(request, env) {
     return new Response("Service configuration error", { status: 503 });
   }
 
-  const valid = await verifyShopifyHmac(request, env.SHOPIFY_WEBHOOK_SECRET);
+  // Accept either a genuine Shopify HMAC signature OR an internal x-hub-key
+  // forwarded by the Shopify app (app.brainsait.de). The internal path is
+  // necessary because the app re-serializes the payload, which invalidates the
+  // original Shopify HMAC but is still trustworthy inside our own network.
+  const internalKey = request.headers.get("x-hub-key") || "";
+  const hmacHeader = request.headers.get("X-Shopify-Hmac-SHA256") || "";
+  let valid = false;
+  if (internalKey && env.DELIVERY_ADMIN_TOKEN && internalKey === env.DELIVERY_ADMIN_TOKEN) {
+    valid = true;
+  } else if (hmacHeader && env.SHOPIFY_WEBHOOK_SECRET) {
+    valid = await verifyShopifyHmac(request, env.SHOPIFY_WEBHOOK_SECRET);
+  }
   if (!valid) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const order = await request.json();
+  const topic = request.headers.get("X-Shopify-Topic") || "";
+  if (topic && topic !== "orders/paid") {
+    return new Response("Ignoring non-orders/paid topic", { status: 200 });
+  }
+  const shopDomain = request.headers.get("X-Shopify-Shop-Domain") || "";
+  if (env.SHOPIFY_SHOP_DOMAIN && shopDomain) {
+    const allowed = String(env.SHOPIFY_SHOP_DOMAIN)
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+    if (allowed.length > 0 && !allowed.includes(shopDomain.toLowerCase()) && !allowed.includes(shopDomain.toLowerCase().replace(/^www\./, ""))) {
+      return new Response("Unknown shop domain", { status: 403 });
+    }
+  }
+
+  let order;
+  try {
+    order = await request.json();
+  } catch {
+    return new Response("Invalid JSON body", { status: 400 });
+  }
+  if (!order || typeof order !== "object" || !order.id) {
+    return new Response("Order id is required", { status: 400 });
+  }
   const orderId = String(order.id);
   const customerEmail = order.email || order.customer?.email || "";
   const customerId = String(order.customer?.id || orderId);
@@ -434,17 +584,28 @@ async function handleOrderPaid(request, env) {
     }
   }
 
-  if (unsupported.length > 0) {
-    console.error("unsupported Shopify SKUs", JSON.stringify({ orderId, unsupported }));
+  // Unknown SKUs no longer fail the whole order: supported line items are
+  // fulfilled and notifications still fire. The unknown SKUs are reported in
+  // the response and surfaced in the observability stream so the manifest can
+  // be extended without ever blocking a paid customer's delivery again.
+  if (errors.length > 0) {
+    console.error("fulfillment errors", JSON.stringify({ orderId, errors }));
     return new Response(JSON.stringify({ ok: false, retryable: true }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
   }
 
-  if (errors.length > 0) {
-    console.error("fulfillment errors", JSON.stringify({ orderId, errors }));
-    return new Response(JSON.stringify({ ok: false, retryable: true }), {
+  // Mail & OTP plans are provisioned (tenant + API key) by the notify service.
+  let mailOtp = { ok: true, skipped: true };
+  try {
+    mailOtp = await provisionMailOtp(env, order);
+  } catch (error) {
+    console.error("mail-otp provisioning failed", JSON.stringify({ orderId, error: error.message }));
+    mailOtp = { ok: false, error: error.message };
+  }
+  if (mailOtp.ok === false) {
+    return new Response(JSON.stringify({ ok: false, retryable: true, mailOtp }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
@@ -485,9 +646,221 @@ async function handleOrderPaid(request, env) {
   return new Response(JSON.stringify({
     ok: true,
     fulfilled: fulfilled.length,
+    unsupported: unsupported.map((entry) => entry.sku),
     notifications,
     ignored,
+    mailOtp,
   }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// New product created in Shopify. This worker owns no product catalog table —
+// the actionable gap (documented repeatedly in launch audits) is products
+// going live with no delivery asset behind them, so this is a Telegram nudge
+// to ops, not a database write.
+async function handleProductCreate(request, env) {
+  if (!(await verifyShopifyAuth(request, env))) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  let product;
+  try {
+    product = await request.json();
+  } catch {
+    return new Response("Invalid JSON body", { status: 400 });
+  }
+  const skus = (product?.variants || []).map((v) => v.sku).filter(Boolean);
+  const isOid = skus.some((sku) => sku.startsWith("OID-") || sku.startsWith("BSP-OID-"));
+  const text = [
+    "🆕 New Shopify product created",
+    `Title: ${product?.title || "unknown"}`,
+    skus.length > 0 ? `SKU(s): ${skus.join(", ")}` : "SKU(s): none set",
+    isOid
+      ? "⚠️ OID/BSP-OID SKU — confirm it has a SKU_ASSETS manifest entry in oid-order-fulfillment before it goes live."
+      : "⚠️ Confirm a `source:` tag is set so the storefront catalog can resolve a delivery asset.",
+  ].join("\n");
+  try {
+    await notifyTelegramOps(env, text);
+  } catch (error) {
+    console.error("product-create alert failed", JSON.stringify({ error: error.message }));
+  }
+  return new Response(JSON.stringify({ ok: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// A Shopify transaction (sale/capture/refund/void) posted against an order.
+// The only gap this worker had was refunds: a refunded OID/BSP-OID order kept
+// its license active forever. Every other transaction kind is acknowledged
+// and skipped — orders/paid already handles the successful-sale path.
+async function handleTransactionCreate(request, env) {
+  if (!(await verifyShopifyAuth(request, env))) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  let txn;
+  try {
+    txn = await request.json();
+  } catch {
+    return new Response("Invalid JSON body", { status: 400 });
+  }
+  const orderId = String(txn?.order_id || "");
+  const kind = String(txn?.kind || "").toLowerCase();
+  const status = String(txn?.status || "").toLowerCase();
+  if (!orderId || kind !== "refund" || status !== "success") {
+    return new Response(JSON.stringify({ ok: true, skipped: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  if (!env.AIRTABLE_API_KEY) {
+    return new Response("Service configuration error", { status: 503 });
+  }
+
+  let records;
+  try {
+    records = await listAirtableByOrderId(env, orderId);
+  } catch (error) {
+    console.error("refund lookup failed", JSON.stringify({ orderId, error: error.message }));
+    return new Response(JSON.stringify({ ok: false, retryable: true }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  // No license record for this order id = not an OID/BSP-OID order. Nothing
+  // for this worker to revoke; some other system owns that refund.
+  if (records.length === 0) {
+    return new Response(JSON.stringify({ ok: true, skipped: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const revoked = [];
+  const errors = [];
+  for (const record of records) {
+    const licenseKey = record.fields?.["License Key"];
+    if (!licenseKey || record.fields?.Status === "Revoked") continue;
+    try {
+      await revokeLicense(env, licenseKey);
+      await logToAirtable(env, {
+        "License Key": licenseKey,
+        Status: "Revoked",
+        Notes: `Refunded ${new Date().toISOString()} — access revoked via order_transactions/create`,
+      });
+      revoked.push(licenseKey);
+    } catch (error) {
+      errors.push({ licenseKey, error: error.message });
+    }
+  }
+  try {
+    if (revoked.length > 0) {
+      await notifyTelegramOps(
+        env,
+        `↩️ Refund processed for order ${orderId} — revoked license(s): ${revoked.join(", ")}`
+      );
+    }
+  } catch (error) {
+    console.error("refund telegram alert failed", JSON.stringify({ orderId, error: error.message }));
+  }
+
+  if (errors.length > 0) {
+    console.error("refund revocation errors", JSON.stringify({ orderId, errors }));
+    return new Response(JSON.stringify({ ok: false, retryable: true, revoked, errors }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  return new Response(JSON.stringify({ ok: true, revoked }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// Order reached Shopify's "fulfilled" state. Since OID/BSP-OID delivery
+// already happens synchronously on orders/paid, this is a reconciliation
+// safety net: alert ops if an order was marked fulfilled but this worker
+// never actually issued a license for one of its OID SKUs (e.g. an earlier
+// failed/exhausted webhook retry, or a manual admin fulfillment).
+async function handleOrderFulfilled(request, env) {
+  if (!(await verifyShopifyAuth(request, env))) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  let order;
+  try {
+    order = await request.json();
+  } catch {
+    return new Response("Invalid JSON body", { status: 400 });
+  }
+  const orderId = String(order?.id || "");
+  const oidSkus = (order?.line_items || [])
+    .map((li) => li.sku)
+    .filter((sku) => sku && (sku.startsWith("OID-") || sku.startsWith("BSP-OID-")));
+  if (!orderId || oidSkus.length === 0 || !env.AIRTABLE_API_KEY) {
+    return new Response(JSON.stringify({ ok: true, skipped: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  let records;
+  try {
+    records = await listAirtableByOrderId(env, orderId);
+  } catch (error) {
+    console.error(
+      "fulfilled reconciliation lookup failed",
+      JSON.stringify({ orderId, error: error.message })
+    );
+    return new Response(JSON.stringify({ ok: true, reconciled: false }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  const issuedSkus = new Set(records.map((r) => r.fields?.["Product SKU"]).filter(Boolean));
+  const missing = oidSkus.filter((sku) => !issuedSkus.has(sku));
+  if (missing.length > 0) {
+    try {
+      await notifyTelegramOps(
+        env,
+        `⚠️ Order ${orderId} marked fulfilled but no license record exists for: ${missing.join(", ")} — check manually.`
+      );
+    } catch (error) {
+      console.error(
+        "fulfilled reconciliation alert failed",
+        JSON.stringify({ orderId, error: error.message })
+      );
+    }
+  }
+  return new Response(JSON.stringify({ ok: true, missing }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// A Fulfillment object was created. This catalog is 100% digital delivery —
+// there is genuinely nothing actionable here (no shipment, no tracking to
+// relay). Logged to the observability stream only, honestly, rather than
+// inventing busywork for an event this store has no physical use for.
+async function handleFulfillmentCreate(request, env) {
+  if (!(await verifyShopifyAuth(request, env))) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  let fulfillment;
+  try {
+    fulfillment = await request.json();
+  } catch {
+    return new Response("Invalid JSON body", { status: 400 });
+  }
+  console.log(
+    "fulfillment.create",
+    JSON.stringify({
+      orderId: fulfillment?.order_id,
+      trackingCompany: fulfillment?.tracking_company || null,
+      trackingNumber: fulfillment?.tracking_number || null,
+      lineItemSkus: (fulfillment?.line_items || []).map((li) => li.sku).filter(Boolean),
+    })
+  );
+  return new Response(JSON.stringify({ ok: true }), {
     status: 200,
     headers: { "Content-Type": "application/json" },
   });
@@ -515,6 +888,11 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "POST" && url.pathname === "/webhooks/shopify/orders-paid") {
+      const topic = request.headers.get("X-Shopify-Topic") || "";
+      if (topic === "products/create") return handleProductCreate(request, env);
+      if (topic === "order_transactions/create") return handleTransactionCreate(request, env);
+      if (topic === "orders/fulfilled") return handleOrderFulfilled(request, env);
+      if (topic === "fulfillments/create") return handleFulfillmentCreate(request, env);
       return handleOrderPaid(request, env);
     }
 
