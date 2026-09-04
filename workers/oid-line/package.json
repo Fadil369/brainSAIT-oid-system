@@ -1,0 +1,14 @@
+{
+  "name": "oid-line",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config wrangler.toml",
+    "deploy": "wrangler deploy --config wrangler.toml",
+    "tail": "wrangler tail --config wrangler.toml"
+  },
+  "devDependencies": {
+    "wrangler": "4.120.0"
+  }
+}

@@ -1,0 +1,23 @@
+name = "oid-line"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+# NOTE: no account_id here — CI provides CLOUDFLARE_ACCOUNT_ID at deploy time.
+
+[[kv_namespaces]]
+binding = "OID_REGISTRY"
+id = "07ea6ec79f2f46ebbc8076a2000fcfa9"
+
+[[kv_namespaces]]
+binding = "IDENTITY_CACHE"
+id = "a6ac3b1a6086420e95b14e51e78bc288"
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+
+# Secrets — set via: wrangler secret put <NAME>  (or repo Secrets, see deploy-oid-line.yml)
+# SHOPIFY_HOOK_SECRETS — JSON map {"brainsait-oid.myshopify.com": "shpss_..."} (OID-FABRIC app)
+# WEBHOOK_SECRET       — legacy fallback single secret
+# SHOPIFY_OID_TOKEN    — Admin API token (shpat_...) for POST /v1/order/draft invoice minting

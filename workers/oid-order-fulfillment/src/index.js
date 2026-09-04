@@ -139,6 +139,18 @@ SKU_ASSETS["BSP-OID-REGISTRY-PLATFORM"] = { ...SKU_ASSETS["OID-DEV-001"], assets
 SKU_ASSETS["BSP-OID-NPHIES-BUNDLE"] = { ...SKU_ASSETS["OID-HLTH-001"], assets: [...SKU_ASSETS["OID-HLTH-001"].assets] };
 SKU_ASSETS["BSP-OID-ENTERPRISE-BADGE"] = { ...SKU_ASSETS["OID-BADGE-001"], assets: [...SKU_ASSETS["OID-BADGE-001"].assets] };
 
+// Live brainsait-oid catalog (id.brainsait.org, OID LINE) reuses the same asset
+// manifests. Variants (e.g. OID-BADGE-M / OID-BADGE-A) share one manifest each.
+SKU_ASSETS["OID-BADGE-M"] = SKU_ASSETS["OID-BADGE-001"];
+SKU_ASSETS["OID-BADGE-A"] = SKU_ASSETS["OID-BADGE-001"];
+SKU_ASSETS["OID-EXPLORER"] = SKU_ASSETS["OID-DEV-001"];
+SKU_ASSETS["OID-FHIR"] = SKU_ASSETS["OID-FHIR-PLAT-001"];
+SKU_ASSETS["OID-NPHIES"] = SKU_ASSETS["OID-HLTH-001"];
+SKU_ASSETS["OID-NPHIES-SUP"] = SKU_ASSETS["OID-HLTH-001"];
+SKU_ASSETS["OID-NAMESPACE"] = SKU_ASSETS["OID-ENT-ARCH-001"];
+SKU_ASSETS["OID-NAMESPACE-SETUP"] = SKU_ASSETS["OID-STARTER-001"];
+SKU_ASSETS["OID-WHITELABEL"] = SKU_ASSETS["OID-WL-ENT-001"];
+
 async function generateLicenseKey(secret, orderId, lineItemId, unit, sku) {
   const prefix = sku.replace(/[^A-Z0-9]/g, "").slice(0, 8);
   const key = await crypto.subtle.importKey(
@@ -364,14 +376,29 @@ async function provisionMailOtp(env, order) {
 // order_transactions/create, orders/fulfilled, fulfillments/create).
 // handleOrderPaid keeps its own inline copy untouched — this worker fulfills
 // real paid orders, so that path is deliberately not refactored here.
+// Per-shop webhook secrets: SHOPIFY_HOOK_SECRETS is a JSON map
+// {"shop.myshopify.com": "shpss_..."}. Falls back to the legacy single
+// SHOPIFY_WEBHOOK_SECRET (flagship store). Lets staging + production coexist.
+function secretForShop(env, shopDomain) {
+  try {
+    const map = JSON.parse(env.SHOPIFY_HOOK_SECRETS || "{}");
+    if (shopDomain && map[shopDomain]) return map[shopDomain];
+  } catch {
+    // fall through to legacy secret
+  }
+  return env.SHOPIFY_WEBHOOK_SECRET || null;
+}
+
 async function verifyShopifyAuth(request, env) {
   const internalKey = request.headers.get("x-hub-key") || "";
   const hmacHeader = request.headers.get("X-Shopify-Hmac-SHA256") || "";
   if (internalKey && env.DELIVERY_ADMIN_TOKEN && internalKey === env.DELIVERY_ADMIN_TOKEN) {
     return true;
   }
-  if (hmacHeader && env.SHOPIFY_WEBHOOK_SECRET) {
-    return verifyShopifyHmac(request, env.SHOPIFY_WEBHOOK_SECRET);
+  if (hmacHeader) {
+    const shopDomain = request.headers.get("X-Shopify-Shop-Domain") || "";
+    const secret = secretForShop(env, shopDomain);
+    if (secret) return verifyShopifyHmac(request, secret);
   }
   return false;
 }
@@ -447,7 +474,7 @@ async function logToAirtable(env, record) {
 
 async function handleOrderPaid(request, env) {
   if (
-    !env.SHOPIFY_WEBHOOK_SECRET
+    (!env.SHOPIFY_WEBHOOK_SECRET && !env.SHOPIFY_HOOK_SECRETS)
     || !env.LICENSE_SIGNING_SECRET
     || !env.DELIVERY_ADMIN_TOKEN
     || !env.AIRTABLE_API_KEY

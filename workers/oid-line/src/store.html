@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OID LINE — BrainSAIT | Verified Healthcare Identity</title>
+<meta name="description" content="OID LINE — pioneer verified healthcare identity for Saudi Arabia. NPHIES-ready, PDPL-compliant, QR-verified.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --ink:#0c0a08; --coal:#14110d; --coal2:#1b1712;
+  --gold:#c9a45c; --gold2:#e8cf8f; --gold-dim:rgba(201,164,92,.28);
+  --cream:#f5efe3; --muted:#a89c86; --line:rgba(201,164,92,.22);
+  --serif:'Cormorant Garamond',serif; --sans:'Inter',sans-serif; --arab:'IBM Plex Sans Arabic',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--cream);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden}
+html[dir="rtl"] body{font-family:var(--arab)}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(900px 500px at 15% -5%,rgba(201,164,92,.10),transparent 60%),
+             radial-gradient(800px 500px at 90% 20%,rgba(201,164,92,.07),transparent 60%),
+             radial-gradient(700px 600px at 50% 110%,rgba(201,164,92,.06),transparent 60%)}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px;position:relative;z-index:2}
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(14px);background:rgba(12,10,8,.72);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1180px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:26px}
+.brand{font-family:var(--serif);font-size:1.35rem;letter-spacing:.14em;color:var(--gold2);text-decoration:none}
+.brand small{display:block;font-family:var(--sans);font-size:.58rem;letter-spacing:.42em;color:var(--muted)}
+.nav-links{display:flex;gap:22px;margin-inline-start:auto}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;transition:color .3s}
+.nav-links a:hover{color:var(--gold2)}
+.lang-btn{background:transparent;border:1px solid var(--line);color:var(--gold2);padding:6px 16px;font-size:.75rem;letter-spacing:.15em;cursor:pointer;border-radius:20px;transition:all .3s}
+.lang-btn:hover{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+/* hero */
+.hero{min-height:100vh;display:flex;align-items:center;padding:130px 0 70px;position:relative}
+.eyebrow{color:var(--gold);letter-spacing:.4em;font-size:.72rem;text-transform:uppercase;margin-bottom:22px}
+html[dir="rtl"] .eyebrow{letter-spacing:.1em}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.8rem,7vw,5.2rem);line-height:1.08;margin-bottom:18px}
+html[dir="rtl"] h1{font-family:var(--arab);font-weight:600}
+h1 em{font-style:italic;background:linear-gradient(100deg,var(--gold2),var(--gold) 60%,#9a7a3e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{max-width:620px;color:var(--muted);font-size:1.06rem;margin-bottom:34px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:44px}
+.btn{display:inline-block;padding:15px 38px;text-decoration:none;font-size:.82rem;letter-spacing:.18em;text-transform:uppercase;border-radius:2px;transition:all .35s;cursor:pointer;border:none}
+.btn-gold{background:linear-gradient(120deg,var(--gold2),var(--gold));color:var(--ink);font-weight:600}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(201,164,92,.35)}
+.btn-ghost{border:1px solid var(--line);color:var(--cream);background:transparent}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold2)}
+.verify-inline{display:flex;gap:0;max-width:560px;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:rgba(27,23,18,.7)}
+.verify-inline input{flex:1;background:transparent;border:none;outline:none;color:var(--cream);padding:16px 20px;font-size:.95rem;font-family:inherit}
+.verify-inline button{background:linear-gradient(120deg,var(--gold2),var(--gold));border:none;color:var(--ink);font-weight:600;padding:0 30px;letter-spacing:.12em;font-size:.8rem;cursor:pointer;text-transform:uppercase}
+.verify-hint{font-size:.75rem;color:var(--muted);margin-top:10px;letter-spacing:.06em}
+.stats{display:flex;gap:44px;margin-top:52px;flex-wrap:wrap}
+.stat b{display:block;font-family:var(--serif);font-size:2rem;color:var(--gold2);font-weight:500}
+.stat span{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+/* sections */
+section{padding:96px 0;position:relative}
+.sec-head{text-align:center;margin-bottom:56px}
+.sec-head h2{font-family:var(--serif);font-weight:500;font-size:clamp(2rem,4.5vw,3rem);margin-bottom:12px}
+html[dir="rtl"] .sec-head h2{font-family:var(--arab)}
+.sec-head p{color:var(--muted);max-width:640px;margin:0 auto}
+.hair{width:64px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto 26px}
+/* trust */
+.trust{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.trust span{border:1px solid var(--line);border-radius:30px;padding:9px 24px;font-size:.76rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold2)}
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:26px}
+.card{background:linear-gradient(160deg,var(--coal2),var(--coal));border:1px solid var(--line);border-radius:6px;padding:38px 34px;position:relative;transition:transform .4s,box-shadow .4s,border-color .4s;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-8px);border-color:var(--gold);box-shadow:0 26px 60px rgba(0,0,0,.5),0 0 0 1px rgba(201,164,92,.35)}
+.card.featured{background:linear-gradient(160deg,#221a10,#14110d);border-color:var(--gold)}
+.flag{position:absolute;top:-13px;inset-inline-start:28px;background:linear-gradient(120deg,var(--gold2),var(--gold));color:var(--ink);font-size:.66rem;font-weight:600;letter-spacing:.22em;padding:5px 18px;border-radius:20px;text-transform:uppercase}
+.oid-chip{font-size:.68rem;letter-spacing:.14em;color:var(--muted);margin-bottom:14px}
+.card h3{font-family:var(--serif);font-size:1.6rem;font-weight:500;margin-bottom:4px}
+html[dir="rtl"] .card h3{font-family:var(--arab)}
+.card .ar{color:var(--gold);font-size:.95rem;margin-bottom:16px}
+.price{font-family:var(--serif);font-size:2.15rem;color:var(--gold2);margin:8px 0 2px}
+.price small{font-size:.85rem;font-family:var(--sans);color:var(--muted)}
+.bill{font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+.gates{list-style:none;margin-bottom:24px;flex:1}
+.gates li{padding:7px 0 7px 26px;position:relative;font-size:.88rem;color:#d8cdb6}
+html[dir="rtl"] .gates li{padding:7px 26px 7px 0}
+.gates li::before{content:"◆";position:absolute;inset-inline-start:0;color:var(--gold);font-size:.6rem;top:13px}
+.card .btn{text-align:center;margin-top:auto}
+/* verify panel */
+.panel{background:linear-gradient(160deg,var(--coal2),var(--coal));border:1px solid var(--line);border-radius:8px;padding:52px;max-width:760px;margin:0 auto}
+.result{margin-top:26px;padding:26px;border:1px solid var(--line);border-radius:6px;display:none}
+.result.show{display:block;animation:fadeUp .5s ease}
+.result.ok{border-color:#5fa86e}
+.result.bad{border-color:#a85f5f}
+.badge-trust{display:inline-block;padding:6px 20px;border-radius:20px;font-size:.75rem;letter-spacing:.2em;margin-bottom:12px}
+.BIAL-H2{background:rgba(95,168,110,.15);color:#8fd49a;border:1px solid #5fa86e}
+.BIAL-H1{background:rgba(201,164,92,.12);color:var(--gold2);border:1px solid var(--gold)}
+.BIAL-H0{background:rgba(168,95,95,.12);color:#d48f8f;border:1px solid #a85f5f}
+.qr-box{display:flex;gap:26px;align-items:center;margin-top:18px;flex-wrap:wrap}
+#qrcode{background:#fff;padding:12px;border-radius:6px}
+.mono{font-family:ui-monospace,monospace;font-size:.82rem;color:var(--muted);word-break:break-all}
+/* roi */
+.roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:34px;max-width:960px;margin:0 auto}
+@media(max-width:820px){.roi-grid{grid-template-columns:1fr}.panel{padding:32px 22px}}
+.field{margin-bottom:22px}
+.field label{display:block;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.field input[type=range]{width:100%;accent-color:var(--gold)}
+.field .val{font-family:var(--serif);font-size:1.5rem;color:var(--gold2)}
+.roi-out{background:rgba(201,164,92,.06);border:1px solid var(--gold);border-radius:6px;padding:34px}
+.roi-out .big{font-family:var(--serif);font-size:3rem;color:var(--gold2);line-height:1.1}
+.roi-out p{color:var(--muted);font-size:.88rem;margin-top:8px}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.step{border-top:1px solid var(--gold);padding-top:22px}
+.step b{font-family:var(--serif);font-size:2.4rem;color:var(--gold);font-weight:400;display:block}
+.step h4{margin:10px 0 6px;font-weight:500;letter-spacing:.04em}
+.step p{font-size:.86rem;color:var(--muted)}
+/* faq */
+.faq{max-width:760px;margin:0 auto}
+.faq details{border-bottom:1px solid var(--line);padding:20px 4px;cursor:pointer}
+.faq summary{font-weight:500;letter-spacing:.02em;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.faq summary::after{content:"+";color:var(--gold);font-size:1.4rem}
+.faq details[open] summary::after{content:"–"}
+.faq p{color:var(--muted);font-size:.9rem;margin-top:12px}
+/* modal */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;background:rgba(5,4,3,.8);backdrop-filter:blur(6px);padding:20px}
+.modal.show{display:flex}
+.modal-box{background:var(--coal2);border:1px solid var(--gold);border-radius:8px;max-width:520px;width:100%;padding:44px;position:relative;animation:fadeUp .4s ease}
+.modal-box h3{font-family:var(--serif);font-size:1.7rem;margin-bottom:6px}
+.modal-box .sub{color:var(--muted);font-size:.86rem;margin-bottom:24px}
+.modal-box label{display:block;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.modal-box input,.modal-box select{width:100%;background:var(--ink);border:1px solid var(--line);color:var(--cream);padding:12px 14px;border-radius:3px;font-family:inherit;font-size:.92rem;outline:none}
+.modal-box input:focus,.modal-box select:focus{border-color:var(--gold)}
+.close-x{position:absolute;top:16px;inset-inline-end:20px;background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer}
+.close-x:hover{color:var(--gold2)}
+.confirm{text-align:center;padding:10px 0}
+.confirm .big-check{font-size:3rem;color:var(--gold2)}
+footer{border-top:1px solid var(--line);padding:56px 0 40px;text-align:center;color:var(--muted);font-size:.8rem}
+footer .brand{margin-bottom:14px;display:inline-block}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
+.reveal.in{opacity:1;transform:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<nav><div class="nav-in">
+  <a class="brand" href="#top">OID LINE<small>BRAINSAIT</small></a>
+  <div class="nav-links">
+    <a href="#collection" data-en="Collection" data-ar="المجموعة">Collection</a>
+    <a href="#verify" data-en="Verify" data-ar="تحقق">Verify</a>
+    <a href="#value" data-en="Value" data-ar="القيمة">Value</a>
+    <a href="#faq" data-en="FAQ" data-ar="أسئلة">FAQ</a>
+  </div>
+  <button class="lang-btn" id="langBtn">العربية</button>
+</div></nav>
+
+<header class="hero" id="top"><div class="wrap">
+  <div class="eyebrow" data-en="Pioneer · Verified Healthcare Identity · Saudi Arabia" data-ar="الريادة · هوية صحية موثقة · المملكة العربية السعودية">Pioneer · Verified Healthcare Identity · Saudi Arabia</div>
+  <h1 data-en="Identity, <em>gilded</em> in trust." data-ar="هوية <em>مذهبة</em> بالثقة.">Identity, <em>gilded</em> in trust.</h1>
+  <p class="lede" data-en="The first verified provider identity line for the Kingdom — NPHIES-ready, PDPL-compliant, QR-verified. Every credential traceable. Every claim payable. Every provider golden." data-ar="أول خط هوية موثقة للممارسين في المملكة — جاهز للنفيس، متوافق مع حماية البيانات، وموثق برمز QR. كل اعتماد قابل للتتبع، وكل مطالبة قابلة للصرف.">The first verified provider identity line for the Kingdom — NPHIES-ready, PDPL-compliant, QR-verified. Every credential traceable. Every claim payable. Every provider golden.</p>
+  <div class="hero-cta">
+    <a class="btn btn-gold" href="#collection" data-en="Explore the Collection" data-ar="استكشف المجموعة">Explore the Collection</a>
+    <a class="btn btn-ghost" href="#verify" data-en="Verify a Provider" data-ar="تحقق من ممارس">Verify a Provider</a>
+  </div>
+  <div class="verify-inline">
+    <input id="heroSpid" data-en-ph="Enter provider ID — e.g. BS-P-000001" data-ar-ph="أدخل هوية الممارس — مثال BS-P-000001" placeholder="Enter provider ID — e.g. BS-P-000001">
+    <button onclick="quickVerify()" data-en="Verify" data-ar="تحقق">Verify</button>
+  </div>
+  <div class="verify-hint" data-en="Instant · Free · Public registry" data-ar="فوري · مجاني · سجل عام">Instant · Free · Public registry</div>
+  <div class="stats">
+    <div class="stat"><b>26,250</b><span data-en="SAR lost / provider / delayed month" data-ar="ريال خسارة لكل ممارس شهرياً">SAR lost / provider / delayed month</span></div>
+    <div class="stat"><b>60–180</b><span data-en="Days credentialing delays" data-ar="يوماً من تأخير الاعتماد">Days credentialing delays</span></div>
+    <div class="stat"><b>.14.1–.6</b><span data-en="Dedicated OID product arcs" data-ar="أقواس منتجات OID مخصصة">Dedicated OID product arcs</span></div>
+  </div>
+</div></header>
+
+<section id="collection"><div class="wrap">
+  <div class="sec-head reveal">
+    <div class="hair"></div>
+    <h2 data-en="The Collection" data-ar="المجموعة">The Collection</h2>
+    <p data-en="Six instruments of verified identity. Priced for the value they protect — annual-first, enterprise-grade, concierge-fulfilled." data-ar="ست أدوات للهوية الموثقة. مسعرة بقيمة ما تحميه — سنوية أولاً، بمستوى المؤسسات، وتنفيذ شخصي.">Six instruments of verified identity. Priced for the value they protect — annual-first, enterprise-grade, concierge-fulfilled.</p>
+  </div>
+  <div class="grid" id="cards"></div>
+</div></section>
+
+<section id="verify"><div class="wrap">
+  <div class="sec-head reveal">
+    <div class="hair"></div>
+    <h2 data-en="Verify in Seconds" data-ar="تحقق في ثوانٍ">Verify in Seconds</h2>
+    <p data-en="Every badge carries a live QR. Scan it, or enter any provider ID below — the registry answers with cryptographic trust." data-ar="كل شارة تحمل رمز QR حي. امسحه أو أدخل هوية أي ممارس — يجيب السجل بثقة موثقة.">Every badge carries a live QR. Scan it, or enter any provider ID below — the registry answers with cryptographic trust.</p>
+  </div>
+  <div class="panel reveal">
+    <div class="verify-inline" style="max-width:100%">
+      <input id="spid" data-en-ph="Provider ID — e.g. BS-P-000001" data-ar-ph="هوية الممارس — مثال BS-P-000001" placeholder="Provider ID — e.g. BS-P-000001">
+      <button onclick="doVerify()" data-en="Verify" data-ar="تحقق">Verify</button>
+    </div>
+    <div class="result" id="vResult"></div>
+  </div>
+  <div class="trust" style="margin-top:36px">
+    <span>NPHIES-ready</span><span>PDPL</span><span>CCHI</span><span>FHIR R4</span><span>QR-verified</span>
+  </div>
+</div></section>
+
+<section id="value"><div class="wrap">
+  <div class="sec-head reveal">
+    <div class="hair"></div>
+    <h2 data-en="The Mathematics of Trust" data-ar="رياضيات الثقة">The Mathematics of Trust</h2>
+    <p data-en="One delayed provider leaks ~26,250 SAR every month. Move the sliders — watch a badge pay for itself before lunch." data-ar="الممارس المتأخر يسرّب ٢٦٬٢٥٠ ريالاً شهرياً. حرّك المؤشرات — وشاهد الشارة تدفع ثمنها قبل الغداء.">One delayed provider leaks ~26,250 SAR every month. Move the sliders — watch a badge pay for itself before lunch.</p>
+  </div>
+  <div class="roi-grid reveal">
+    <div>
+      <div class="field"><label data-en="Providers waiting on credentialing" data-ar="ممارسون بانتظار الاعتماد">Providers waiting on credentialing</label><div class="val" id="vProv">10</div><input type="range" id="rProv" min="1" max="200" value="10" oninput="roi()"></div>
+      <div class="field"><label data-en="Average delay (months)" data-ar="متوسط التأخير (أشهر)">Average delay (months)</label><div class="val" id="vMon">3</div><input type="range" id="rMon" min="1" max="12" value="3" oninput="roi()"></div>
+      <div class="field"><label data-en="Monthly leak per provider (SAR)" data-ar="التسرب الشهري لكل ممارس (ريال)">Monthly leak per provider (SAR)</label><div class="val" id="vLeak">26,250</div><input type="range" id="rLeak" min="5000" max="60000" step="1250" value="26250" oninput="roi()"></div>
+    </div>
+    <div class="roi-out">
+      <div class="big" id="roiExp">787,500 <small style="font-size:1.1rem">SAR</small></div>
+      <p data-en="Revenue exposed to delay" data-ar="إيرادات معرضة للتأخير">Revenue exposed to delay</p>
+      <div class="big" id="roiMult" style="font-size:2rem;margin-top:18px">8.0×</div>
+      <p><span data-en="Return on Verification Badges" data-ar="العائد على شارات التحقق">Return on Verification Badges</span> · <span id="roiCost">99,000 SAR</span></p>
+    </div>
+  </div>
+</div></section>
+
+<section id="process"><div class="wrap">
+  <div class="sec-head reveal">
+    <div class="hair"></div>
+    <h2 data-en="From Mandate to Gold" data-ar="من الإلزام إلى الذهب">From Mandate to Gold</h2>
+  </div>
+  <div class="steps reveal">
+    <div class="step"><b>I</b><h4 data-en="Discovery" data-ar="الاستكشاف">Discovery</h4><p data-en="Paid scoping: FHIR distance, code mapping, facilities, payers. Fixed quote, zero surprises." data-ar="تحديد مدفوع: مسافة FHIR، ترميز الأكواد، المرافق، الدافعون. عرض ثابت بلا مفاجآت.">Paid scoping: FHIR distance, code mapping, facilities, payers. Fixed quote, zero surprises.</p></div>
+    <div class="step"><b>II</b><h4 data-en="Integration" data-ar="التكامل">Integration</h4><p data-en="FHIR R4 profiles, NPHIES eligibility + auth + claims, CCHI conformance, go-live." data-ar="ملفات FHIR R4، أهلية نفيس واعتماد ومطالبات، مطابقة CCHI، إطلاق.">FHIR R4 profiles, NPHIES eligibility + auth + claims, CCHI conformance, go-live.</p></div>
+    <div class="step"><b>III</b><h4 data-en="Verification" data-ar="التحقق">Verification</h4><p data-en="Badges issued, QR minted, directory listed. Public trust, instantly checkable." data-ar="إصدار الشارات وسك QR والإدراج بالدليل. ثقة عامة قابلة للتحقق الفوري.">Badges issued, QR minted, directory listed. Public trust, instantly checkable.</p></div>
+    <div class="step"><b>IV</b><h4 data-en="Operation" data-ar="التشغيل">Operation</h4><p data-en="Monitoring, audit trail, SLA, training. Annual license, concierge support." data-ar="مراقبة وسجل تدقيق واتفاقية خدمة وتدريب. رخصة سنوية ودعم شخصي.">Monitoring, audit trail, SLA, training. Annual license, concierge support.</p></div>
+  </div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <div class="sec-head reveal">
+    <div class="hair"></div>
+    <h2 data-en="Procurement, Answered" data-ar="المشتريات، مُجابة">Procurement, Answered</h2>
+  </div>
+  <div class="faq reveal">
+    <details><summary data-en="How do government entities procure OID LINE?" data-ar="كيف تشتري الجهات الحكومية؟">How do government entities procure OID LINE?</summary><p data-en="Annual enterprise licenses with Etimad-ready documentation: compliance checklist, conformance statement, SLA, training plan and VAT invoice. Discovery is paid and credited toward build on signature." data-ar="رخص مؤسسية سنوية بمستندات جاهزة لمنصة اعتماد: قائمة امتثال وبيان مطابقة واتفاقية خدمة وخطة تدريب وفاتورة ضريبية. الاستكشاف مدفوع ويُحتسب من التنفيذ عند التوقيع.">Annual enterprise licenses with Etimad-ready documentation.</p></details>
+    <details><summary data-en="Which payment methods are accepted?" data-ar="ما طرق الدفع المقبولة؟">Which payment methods are accepted?</summary><p data-en="Mada, STC Pay, KNET and cards via MyFatoorah, plus bank transfer for enterprise. SAR with VAT shown." data-ar="مدى وSTC Pay وKNET والبطاقات عبر ماي فاتورة، وتحويل بنكي للمؤسسات. الأسعار بالريال شاملة الضريبة.">Mada, STC Pay, KNET and cards via MyFatoorah, plus bank transfer for enterprise.</p></details>
+    <details><summary data-en="Why annual-first instead of monthly?" data-ar="لماذا السنوية أولاً؟">Why annual-first instead of monthly?</summary><p data-en="Credentialing value compounds over the year — denials prevented, payments accelerated, audits passed. Annual aligns price with that arc and removes renewal friction." data-ar="قيمة الاعتماد تتراكم عبر السنة — رفض أقل وصرف أسرع واجتياز للتدقيق. السنوية توائم السعر مع هذا الأثر وتزيل عناء التجديد.">Credentialing value compounds over the year.</p></details>
+    <details><summary data-en="Is my data PDPL-compliant?" data-ar="هل بياناتي متوافقة مع حماية البيانات؟">Is my data PDPL-compliant?</summary><p data-en="Yes — residency in-region, consent-bound verification, full audit trail, and QR proofs that reveal only what the verifier is entitled to see." data-ar="نعم — إقامة البيانات بالمنطقة، وتحقق مقيد بالموافقة، وسجل تدقيق كامل، وإثباتات QR تكشف فقط ما يحق للمتحقق رؤيته.">Yes — residency, consent-bound verification, full audit trail.</p></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span class="brand">OID LINE<small>BRAINSAIT</small></span>
+  <p data-en="Product arcs .14.1 – .14.6 · verify.brainsait.org · registry.brainsait.org" data-ar="أقواس المنتجات .14.1 – .14.6 · verify.brainsait.org · registry.brainsait.org">Product arcs .14.1 – .14.6 · verify.brainsait.org · registry.brainsait.org</p>
+  <p style="margin-top:8px;opacity:.6">© 2026 BrainSAIT — Crafted in gold.</p>
+</div></footer>
+
+<div class="modal" id="orderModal"><div class="modal-box">
+  <button class="close-x" onclick="closeOrder()">×</button>
+  <div id="orderForm">
+    <h3 data-en="Request Allocation" data-ar="طلب تخصيص">Request Allocation</h3>
+    <p class="sub" id="orderSkuLine"></p>
+    <label data-en="Full name" data-ar="الاسم الكامل">Full name</label><input id="oName" data-en-ph="Your name" data-ar-ph="اسمك" placeholder="Your name">
+    <label data-en="Organization" data-ar="الجهة">Organization</label><input id="oOrg" data-en-ph="Hospital / Ministry / Company" data-ar-ph="مستشفى / وزارة / شركة" placeholder="Hospital / Ministry / Company">
+    <label data-en="Provider ID (if badge)" data-ar="هوية الممارس (للشارة)">Provider ID (if badge)</label><input id="oSpid" placeholder="BS-P-000001">
+    <label data-en="Email (for receipt)" data-ar="البريد (للإيصال)">Email (for receipt)</label><input id="oEmail" type="email" placeholder="you@hospital.sa">
+    <label data-en="Instrument" data-ar="الأداة">Instrument</label><select id="oSku"></select>
+    <button class="btn btn-gold" style="width:100%;margin-top:24px" onclick="submitOrder()" data-en="Get Payment Link" data-ar="احصل على رابط الدفع">Get Payment Link</button>
+    <p class="sub" style="margin-top:12px" data-en="Instant invoice · Pay with Mada / STC Pay / KNET / cards · No account needed" data-ar="فاتورة فورية · ادفع بمدى / STC Pay / KNET / البطاقات · بلا حساب">Instant invoice · Pay with Mada / STC Pay / KNET / cards · No account needed</p>
+  </div>
+  <div id="orderDone" class="confirm" style="display:none">
+    <div class="big-check">◆</div>
+    <h3 data-en="Received with pleasure." data-ar="استلمنا بكل سرور.">Received with pleasure.</h3>
+    <p class="sub" id="orderRef"></p>
+    <p class="mono" id="orderNext"></p>
+    <button class="btn btn-ghost" style="margin-top:20px" onclick="closeOrder()" data-en="Continue" data-ar="متابعة">Continue</button>
+  </div>
+</div></div>
+<script>
+const API = location.origin;
+const FALLBACK = [
+ {sku:"OID-BADGE",oid:"1.3.6.1.4.1.61026.14.1",en:"Verification Badge",ar:"شارة التحقق",price:"9,900",unit:"SAR / yr",bill:"Annual · or 990 / mo",gates:["1 verified provider","Live QR + public directory","Continuous monitoring","Pro-rata overage"],featured:true,flag_en:"Most coveted",flag_ar:"الأكثر طلباً"},
+ {sku:"OID-EXPLORER",oid:"1.3.6.1.4.1.61026.14.2",en:"Registry Explorer Seat",ar:"مقعد مستكشف السجل",price:"24,000",unit:"SAR / yr",bill:"Per facility",gates:["1 facility seat","Audit trail + dashboard","Denial analytics","Extra facility 24K/yr"]},
+ {sku:"OID-FHIR",oid:"1.3.6.1.4.1.61026.14.3",en:"FHIR Integration Platform",ar:"منصة تكامل FHIR",price:"120,000",unit:"SAR",bill:"One-time · go-live included",gates:["FHIR R4 profiles","Terminology + code mapping","HIS / LIS / RIS adapters","Extra integration scoped"]},
+ {sku:"OID-NPHIES",oid:"1.3.6.1.4.1.61026.14.4",en:"NPHIES Identity Bundle",ar:"حزمة الهوية الصحية",price:"180,000",unit:"SAR",bill:"One-time · + 48K / yr support",gates:["Eligibility + auth + claims","CCHI conformance","Staff training","Transaction-tier overage"]},
+ {sku:"OID-NAMESPACE",oid:"1.3.6.1.4.1.61026.14.5",en:"Enterprise Namespace License",ar:"رخصة النطاق للمؤسسات",price:"240,000",unit:"SAR / yr",bill:"Annual · + 48K setup",gates:["1 namespace + 18 child arcs","DID + QR minting","oid-base registration","Extra namespace 240K/yr"]},
+ {sku:"OID-WHITELABEL",oid:"1.3.6.1.4.1.61026.14.6",en:"White-Label Enterprise",ar:"العلامة الخاصة للمؤسسات",price:"480,000",unit:"SAR / yr",bill:"Annual · territory custom",gates:["Your brand, our registry","SSO · residency · SLA","Executive training","Committed spend + rev share"]}
+];
+let LANG = "en";
+async function products(){
+  try{ const r = await fetch(API+"/v1/oid-line/products"); const j = await r.json();
+    const list = Array.isArray(j.skus) ? j.skus : (j.skus.skus || []);
+    if(list.length) return list.map(s=>({sku:s.sku,oid:s.oid,en:s.title_en,ar:s.title_ar,
+      price:(s.prices.annual||s.prices.one_time||s.prices.monthly).toLocaleString("en-US"),
+      unit:s.prices.annual?"SAR / yr":"SAR",
+      bill:s.prices.annual&&s.prices.monthly?"Annual · or "+s.prices.monthly.toLocaleString("en-US")+" / mo":(s.prices.annual?"Annual":(s.prices.support_annual?"One-time · + "+s.prices.support_annual.toLocaleString("en-US")+" / yr support":(s.prices.setup?"Annual · + "+s.prices.setup.toLocaleString("en-US")+" setup":"One-time"))),
+      gates:s.gates,featured:s.sku==="OID-BADGE",flag_en:"Most coveted",flag_ar:"الأكثر طلباً"}));
+  }catch(e){}
+  return FALLBACK;
+}
+function renderCards(list){
+  const el = document.getElementById("cards");
+  el.innerHTML = list.map(p=>
+   '<div class="card reveal'+(p.featured?" featured":"")+'">'+
+   (p.featured?'<span class="flag">'+(LANG==="ar"?p.flag_ar:p.flag_en)+"</span>":"")+
+   '<div class="oid-chip">OID '+p.oid+" · "+p.sku+"</div>"+
+   "<h3>"+(LANG==="ar"?p.ar:p.en)+"</h3>"+
+   '<div class="ar">'+(LANG==="ar"?p.en:p.ar)+"</div>"+
+   '<div class="price">'+p.price+" <small>"+p.unit+"</small></div>"+
+   '<div class="bill">'+p.bill+"</div>"+
+   '<ul class="gates">'+p.gates.map(g=>"<li>"+g+"</li>").join("")+"</ul>"+
+   '<button class="btn '+(p.featured?"btn-gold":"btn-ghost")+'" onclick="openOrder(\''+p.sku+"')\">"+(LANG==="ar"?"طلب تخصيص":"Request Allocation")+"</button></div>").join("");
+  observeReveals();
+  const sel = document.getElementById("oSku");
+  sel.innerHTML = list.map(p=>'<option value="'+p.sku+'">'+p.sku+" — "+(LANG==="ar"?p.ar:p.en)+" ("+p.price+" "+p.unit+")</option>").join("");
+}
+function setLang(l){
+  LANG = l;
+  document.getElementById("root").lang = l;
+  document.getElementById("root").dir = l==="ar"?"rtl":"ltr";
+  document.getElementById("langBtn").textContent = l==="ar"?"English":"العربية";
+  document.querySelectorAll("[data-en]").forEach(n=>{ n.innerHTML = l==="ar"?n.dataset.ar:n.dataset.en; });
+  document.querySelectorAll("[data-en-ph]").forEach(n=>{ n.placeholder = l==="ar"?n.dataset.arPh:n.dataset.enPh; });
+  products().then(renderCards);
+}
+document.getElementById("langBtn").onclick = ()=> setLang(LANG==="ar"?"en":"ar");
+function observeReveals(){
+  const io = new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} }),{threshold:.12});
+  document.querySelectorAll(".reveal:not(.in)").forEach(n=>io.observe(n));
+}
+async function verifySpid(spid, box){
+  spid = (spid||"").trim();
+  if(!spid){ box.className="result show bad"; box.innerHTML = LANG==="ar"?"أدخل هوية الممارس أولاً.":"Enter a provider ID first."; return; }
+  box.className="result show"; box.innerHTML = LANG==="ar"?"جارٍ الاستعلام عن السجل…":"Consulting the registry…";
+  try{
+    const r = await fetch(API+"/v1/verify/"+encodeURIComponent(spid));
+    const j = await r.json();
+    if(j.verified){
+      box.className="result show ok";
+      box.innerHTML='<span class="badge-trust '+j.trust+'">'+j.trust+" · "+(LANG==="ar"?"موثق":"VERIFIED")+"</span>"+
+        "<div><b>"+j.spid+"</b> · <span class='mono'>"+(j.oid||"")+"</span></div>"+
+        '<div class="qr-box"><div id="qrcode"></div><div><div class="mono">'+j.qr+'</div><div style="margin-top:10px"><a href="'+j.qr+'" target="_blank" style="color:var(--gold2)">'+(LANG==="ar"?"فتح شارة التحقق":"Open verification badge")+" →</a></div></div></div>";
+      new QRCode(document.getElementById("qrcode"),{text:j.qr,width:128,height:128});
+    } else {
+      box.className="result show bad";
+      box.innerHTML='<span class="badge-trust '+(j.trust||"BIAL-H0")+'">'+(j.trust||"BIAL-H0")+" · "+(LANG==="ar"?"غير موثق":"UNVERIFIED")+"</span><div class='mono'>"+spid+" — "+(LANG==="ar"?"لا سجل. اطلب شارة OID-BADGE.":"No record. Request an OID-BADGE.")+"</div>";
+    }
+  }catch(e){ box.className="result show bad"; box.innerHTML = LANG==="ar"?"تعذر الوصول للسجل. حاول لاحقاً.":"Registry unreachable. Try again shortly."; }
+}
+function doVerify(){ verifySpid(document.getElementById("spid").value, document.getElementById("vResult")); }
+function quickVerify(){ const v=document.getElementById("heroSpid").value; document.getElementById("spid").value=v; document.getElementById("verify").scrollIntoView({behavior:"smooth"}); setTimeout(doVerify,600); }
+document.getElementById("spid").addEventListener("keydown",e=>{ if(e.key==="Enter") doVerify(); });
+document.getElementById("heroSpid").addEventListener("keydown",e=>{ if(e.key==="Enter") quickVerify(); });
+function roi(){
+  const p=+document.getElementById("rProv").value, m=+document.getElementById("rMon").value, l=+document.getElementById("rLeak").value;
+  document.getElementById("vProv").textContent=p; document.getElementById("vMon").textContent=m; document.getElementById("vLeak").textContent=l.toLocaleString("en-US");
+  const exp=p*m*l, cost=p*9900;
+  document.getElementById("roiExp").innerHTML=exp.toLocaleString("en-US")+' <small style="font-size:1.1rem">SAR</small>';
+  document.getElementById("roiMult").textContent=(exp/cost).toFixed(1)+"×";
+  document.getElementById("roiCost").textContent=cost.toLocaleString("en-US")+" SAR";
+}
+function openOrder(sku){
+  document.getElementById("orderForm").style.display="block";
+  document.getElementById("orderDone").style.display="none";
+  document.getElementById("orderModal").classList.add("show");
+  if(sku) document.getElementById("oSku").value=sku;
+  const line = document.getElementById("oSku").selectedOptions[0]?.text || sku || "";
+  document.getElementById("orderSkuLine").textContent = line;
+}
+function closeOrder(){ document.getElementById("orderModal").classList.remove("show"); }
+document.getElementById("oSku").addEventListener("change",e=>{ document.getElementById("orderSkuLine").textContent=e.target.selectedOptions[0].text; });
+async function submitOrder(){
+  const name=document.getElementById("oName").value.trim(), org=document.getElementById("oOrg").value.trim();
+  const spid=document.getElementById("oSpid").value.trim(), sku=document.getElementById("oSku").value;
+  const email=document.getElementById("oEmail").value.trim();
+  if(!name||!org){ alert(LANG==="ar"?"الاسم والجهة مطلوبان.":"Name and organization are required."); return; }
+  const btn=event.target; btn.textContent=LANG==="ar"?"جارٍ إصدار الفاتورة…":"Issuing invoice…"; btn.disabled=true;
+  try{
+    const r=await fetch(API+"/v1/order/draft",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({sku,spid,name,org,email})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"draft failed");
+    document.getElementById("orderForm").style.display="none";
+    const done=document.getElementById("orderDone"); done.style.display="block";
+    document.getElementById("orderRef").textContent=(LANG==="ar"?"فاتورة فورية — ":"Instant invoice — ")+j.sku;
+    document.getElementById("orderNext").innerHTML='<a href="'+j.invoice_url+'" target="_blank" class="btn btn-gold" style="display:inline-block;margin-top:14px">'+(LANG==="ar"?"ادفع الآن":"Pay Now")+" →</a>"+
+      '<div class="mono" style="margin-top:12px">'+j.invoice_url+"</div>"+
+      (j.next?'<div style="margin-top:8px">'+(LANG==="ar"?"بعد الدفع، تحقق هنا: ":"After payment, verify here: ")+'<a href="'+API+j.next+'" target="_blank" style="color:var(--gold2)">'+API+j.next+"</a></div>":"");
+  }catch(e){
+    btn.textContent=LANG==="ar"?"احصل على رابط الدفع":"Get Payment Link"; btn.disabled=false;
+    alert(LANG==="ar"?"تعذر إصدار الفاتورة. حاول لاحقاً.":"Could not issue invoice. Try again shortly.");
+  }
+}
+document.getElementById("orderModal").addEventListener("click",e=>{ if(e.target.id==="orderModal") closeOrder(); });
+products().then(renderCards); observeReveals(); roi();
+</script>
+</body>
+</html>

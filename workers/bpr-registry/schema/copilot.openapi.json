@@ -1,0 +1,102 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "BrainSAIT Clinical Copilot API",
+    "description": "Talk to the grounded Saudi/Gulf clinical copilot (real Workers-AI LLM + medical Vectorize RAG + live provider Registry SPID/OID/verification context) under a strict clinical-safety constitution. Routes any clinical / CDI / coding / DRG / NPHIES claims / provider-verification / patient question. Auto-senses the audience (doctor | cdi | rcm | patient) and mirrors Arabic/English. Returns a plain-text answer; flag emergencies to 997/911.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://registry-api.brainsait.org" }
+  ],
+  "paths": {
+    "/copilot": {
+      "post": {
+        "operationId": "copilotChat",
+        "summary": "Ask the grounded clinical copilot a question",
+        "description": "Sends one turn (plus optional prior turns) to the grounded clinical copilot. Returns the assistant's plain-text answer and metadata.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CopilotRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful answer from the copilot",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CopilotResponse" }
+              }
+            }
+          },
+          "400": { "description": "Bad or unparseable JSON body" },
+          "405": { "description": "Method not allowed" },
+          "500": { "description": "Internal server error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ChatTurn": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string", "enum": ["user", "assistant"], "description": "Speaker role" },
+          "text": { "type": "string", "description": "Message text" }
+        }
+      },
+      "CopilotRequest": {
+        "type": "object",
+        "required": ["messages"],
+        "properties": {
+          "messages": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Recent conversation. The last item is the current user question. Include earlier turns (up to ~8) for context.",
+            "items": { "$ref": "#/components/schemas/ChatTurn" }
+          },
+          "lang": {
+            "type": "string",
+            "enum": ["en", "ar"],
+            "description": "Preferred reply language. Omit to auto-detect from the question text. 'ar' for Arabic."
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["doctor", "cdi", "rcm", "patient", "general"],
+            "description": "Optional explicit mode override. Omit to auto-detect. doctor=concise technical clinician aid; cdi=documentation/coding/audit; rcm=claims/NPHIES/denials; patient=plain, calm, safety-first; general=registry/identity/platform questions."
+          }
+        }
+      },
+      "CopilotResponse": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "string",
+            "description": "The copilot's plain-text answer (may contain simple markdown)."
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["doctor", "cdi", "rcm", "patient", "general"],
+            "description": "The audience mode actually used for this answer."
+          },
+          "safetyFlag": {
+            "type": "boolean",
+            "description": "True if emergency/red-flag terminology was detected; the answer then includes a 997/911 care directive."
+          },
+          "grounded": {
+            "type": "boolean",
+            "description": "True when the answer was grounded in retrieved registry/medical context."
+          },
+          "model": { "type": "string", "description": "LLM model id used" },
+          "used": {
+            "type": "string",
+            "enum": ["ai", "fallback"],
+            "description": "'ai' means the real model answered; 'fallback' means the engine was temporarily unavailable and a short notice was returned."
+          }
+        }
+      }
+    }
+  }
+}

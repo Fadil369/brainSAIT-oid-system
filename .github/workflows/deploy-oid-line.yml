@@ -1,0 +1,93 @@
+name: Deploy OID LINE Worker (brainsait-oid)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "workers/oid-line/**"
+      - ".github/workflows/deploy-oid-line.yml"
+  workflow_dispatch:
+    inputs:
+      deploy_worker:
+        description: "Deploy oid-line worker"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  WORKER_DIR: workers/oid-line
+
+jobs:
+  validate-worker:
+    name: Validate oid-line Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - run: npm install --no-save wrangler@4.120.0
+        working-directory: ${{ env.WORKER_DIR }}
+      - run: npx wrangler deploy --dry-run
+        working-directory: ${{ env.WORKER_DIR }}
+
+  deploy-worker:
+    name: Deploy oid-line Worker
+    runs-on: ubuntu-latest
+    needs: validate-worker
+    environment: production
+    if: >-
+      ${{
+        vars.PRODUCTION_DEPLOY_ENABLED == 'true' &&
+        (
+          (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_dispatch' &&
+           github.ref == 'refs/heads/main' &&
+           github.event.inputs.deploy_worker != 'false')
+        )
+      }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - run: npm install --no-save wrangler@4.120.0
+        working-directory: ${{ env.WORKER_DIR }}
+      - name: Check deployment secrets
+        id: check-secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          OID_LINE_HOOK_SECRETS: ${{ secrets.OID_LINE_HOOK_SECRETS }}
+          OID_LINE_SHOPIFY_TOKEN: ${{ secrets.OID_LINE_SHOPIFY_TOKEN }}
+        run: |
+          missing=0
+          for s in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID OID_LINE_HOOK_SECRETS OID_LINE_SHOPIFY_TOKEN; do
+            if [ -z "${!s}" ]; then echo "::warning::$s missing; skipping."; missing=1; fi
+          done
+          [ "$missing" -eq 1 ] && echo "can_deploy=false" >> "$GITHUB_OUTPUT" && exit 0
+          echo "can_deploy=true" >> "$GITHUB_OUTPUT"
+      - name: Deploy with Wrangler
+        if: steps.check-secrets.outputs.can_deploy == 'true'
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
+      - name: Set Worker Secrets
+        if: steps.check-secrets.outputs.can_deploy == 'true'
+        working-directory: ${{ env.WORKER_DIR }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "${{ secrets.OID_LINE_HOOK_SECRETS }}" | npx wrangler secret put SHOPIFY_HOOK_SECRETS
+          echo "${{ secrets.OID_LINE_SHOPIFY_TOKEN }}" | npx wrangler secret put SHOPIFY_OID_TOKEN
+      - name: Verify deployment
+        if: steps.check-secrets.outputs.can_deploy == 'true'
+        run: |
+          sleep 5
+          curl -sf https://oid-line.brainsait-fadil.workers.dev/health | grep -q '"ok":true'

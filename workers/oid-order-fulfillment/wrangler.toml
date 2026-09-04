@@ -10,7 +10,10 @@ DELIVERY_BASE_URL = "https://assets.brainsait.org"
 RESEND_FROM_EMAIL = "BrainSAIT <orders@brainsait.org>"
 
 # Secrets — set via: wrangler secret put <NAME>
-# SHOPIFY_WEBHOOK_SECRET   — copy from Shopify > Settings > Notifications > Webhooks
+# SHOPIFY_WEBHOOK_SECRET   — legacy single-shop secret (flagship store).
+# SHOPIFY_HOOK_SECRETS     — JSON map {"shop.myshopify.com": "shpss_..."} for
+#                            multi-shop (staging + production). Takes precedence
+#                            per shop; falls back to SHOPIFY_WEBHOOK_SECRET.
 # LICENSE_SIGNING_SECRET   — random 32+ byte secret; keep stable across webhook retries
 # DELIVERY_ADMIN_TOKEN     — same as ADMIN_TOKEN on brainsait-store-delivery worker
 # AIRTABLE_API_KEY         — Airtable personal access token with base:write scope
