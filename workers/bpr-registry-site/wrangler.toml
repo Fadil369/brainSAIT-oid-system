@@ -1,0 +1,26 @@
+name = "bpr-registry"
+main = "src/index.js"
+compatibility_date = "2024-09-25"
+account_id = "d7b99530559ab4f2545e9bdc72a7ab9b"
+
+# Route (managed in the Cloudflare dashboard / zone routes):
+#   registry.brainsait.org/* -> bpr-registry
+
+[[d1_databases]]
+binding = "PLATFORM_DB"
+database_name = "bpr-platform"
+database_id = "f6a576f1-1d43-4092-8546-496ed0efd0e9"
+
+[[kv_namespaces]]
+binding = "SESSION_KV"
+id = "5b9f673b131a4a4399e31d924281e80a"
+
+# Service binding to the agent-passport worker (delegation consent signing)
+[[services]]
+binding = "PASSPORT"
+service = "agent-passport"
+environment = "production"
+
+# Secrets (set via `wrangler secret put`; never committed):
+#   ADMIN_TOKEN, DAFTRA_API_KEY, DAFTRA_BASE_URL, RESEND_API_KEY,
+#   SHOPIFY_ADMIN_TOKEN, SHOPIFY_STORE_DOMAIN, WEBHOOK_SECRET
