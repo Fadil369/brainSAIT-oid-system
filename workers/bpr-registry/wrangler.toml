@@ -1,35 +1,21 @@
-name = "bpr-api"
-main = "src/index.js"
-compatibility_date = "2025-04-01"
-compatibility_flags = ["nodejs_compat"]
+name = "bpr-registry"
+main = "src/index.ts"
+compatibility_date = "2024-09-25"
 
-account_id = "d7b99530559ab4f2545e9bdc72a7ab9b"
-workers_dev = true
-[[d1_databases]]
-binding = "DB"
-database_name = "bpr-prod"
-database_id = "de874639-804d-4045-81a1-854a22d8672a"
+routes = [
+  { pattern = "registry.brainsait.org/*", zone_name = "brainsait.org" },
+  # OID browser alias — same validated tree, second front door (Master Spec §53)
+  { pattern = "oid.brainsait.org/*", zone_name = "brainsait.org" }
+]
 
-# Workers AI — real LLM for the clinical copilot + embeddings for auto-RAG grounding
-[ai]
-binding = "AI"
+d1_databases = [
+  { binding = "PLATFORM_DB", database_name = "brainsait-platform", database_id = "f6a576f1-1d43-4092-8546-496ed0efd0e9" },
+]
 
-# Vectorize — medical / registry knowledge graph used to ground copilot answers
-[[vectorize]]
-binding = "MED_INDEX"
-index_name = "brainsait-medical"
+kv_namespaces = [
+  { binding = "SESSION_KV", id = "5b9f673b131a4a4399e31d924281e80a" },
+]
 
-[env.prod.vars]
-# production-only overrides (ignored outside env.prod unless deployed with --env prod)
-
-[vars]
-APP_ORIGIN = "https://registry.brainsait.org"
-OID_ROOT = "1.3.6.1.4.1.61026"
-MAGIC_LINK_TTL_SECONDS = 900
-SESSION_TTL_SECONDS = 2592000
-RESEND_FROM = "BrainSAIT Registry <noreply@brainsait.de>"
-# Copilot models
-COPILOT_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-EMBED_MODEL = "@cf/baai/bge-base-en-v1.5"
-RAG_TOP_K = 4
-RAG_ENABLED = "true"
+services = [
+  { binding = "PASSPORT", service = "agent-passport" },
+]

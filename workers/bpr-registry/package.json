@@ -1,15 +1,14 @@
 {
-  "name": "bpr-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "bpr-registry",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "dry-run": "wrangler deploy --dry-run"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
-    "wrangler": "^4.128.0"
+    "wrangler": "^4.120.0"
   }
 }
