@@ -33,7 +33,7 @@ wrangler secret put RESEND_API_KEY   # optional — customer delivery email is s
 domain verified in the Resend account the API key belongs to.
 
 On a successful order, the worker also POSTs an admin sale notification to
-`https://hub.brainsait.de/telegram/send` using the `DELIVERY_ADMIN_TOKEN` value as `X-Hub-Key`
+`https://hub.brainsait.org/telegram/send` using the `DELIVERY_ADMIN_TOKEN` value as `X-Hub-Key`
 (the hub's Telegram relay accepts the same key as the delivery Worker's admin API). No separate
 secret needed; this silently no-ops if the hub is unreachable.
 

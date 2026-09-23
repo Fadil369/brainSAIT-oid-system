@@ -216,7 +216,7 @@ async function grantLicense(env, licenseKey, orderId, productIds, assets, custom
   return resp.status === 409 ? { ok: true, replay: true } : resp.json();
 }
 
-const HUB_BASE_URL = "https://hub.brainsait.de";
+const HUB_BASE_URL = "https://hub.brainsait.org";
 const NOTIFY_BASE_URL = "https://notify.brainsait.de";
 
 // BRAINSAIT Identity Cloud — MailOTP SaaS plans sold on store.brainsait.org.
